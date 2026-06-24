@@ -1,191 +1,200 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SamaCare Live Engine</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-</head>
-<body class="p-4 md:p-8 min-h-screen bg-[#FAF6F0] flex flex-col justify-between">
-
-    <!-- HEADER -->
-    <header class="max-w-6xl mx-auto w-full text-center mb-6">
-        <h1 class="text-2xl font-bold text-[#6B1D2F] mb-1">SamaCare Live Engine</h1>
-        <p class="text-xs text-green-600 font-semibold flex items-center justify-center gap-1">
-            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Free Open Cloud Sync Active (No Card Needed)
-        </p>
-    </header>
-
-    <!-- INTERFACE -->
-    <main class="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-start my-auto">
-        
-        <!-- SIMULATOR -->
-        <div class="flex justify-center items-center">
-            <div class="w-72 bg-[#6B1D2F] text-[#FAF6F0] rounded-[40px] p-6 shadow-2xl border-[6px] border-gray-800 flex flex-col justify-between min-h-[480px]">
-                <div class="text-[10px] opacity-75 mb-4 flex justify-between">
-                    <span>SamaCare Live USSD</span>
-                    <span>🔋 100%</span>
-                </div>
-                <div class="flex-grow flex flex-col justify-start">
-                    <div class="bg-white text-gray-800 rounded-2xl p-4 text-xs shadow-inner mb-4 min-h-[160px] flex flex-col justify-between">
-                        <div id="screen-text" class="whitespace-pre-line font-medium leading-relaxed">Loading live session...</div>
-                    </div>
-                    <div id="action-container" class="grid grid-cols-1 gap-2"></div>
-                </div>
-                <button onclick="triggerReset()" class="text-[11px] text-red-200 hover:text-white mt-4 font-semibold">Reset Simulation</button>
-            </div>
-        </div>
-
-        <!-- DOCTOR DASHBOARD -->
-        <div class="bg-white rounded-3xl p-6 shadow-xl border border-gray-100 w-full max-w-md mx-auto">
-            <div class="flex justify-between items-center pb-4 border-b border-gray-100">
-                <div>
-                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Clinician Triage View</span>
-                    <h2 class="text-xl font-bold text-gray-800">Live Case Tracking</h2>
-                </div>
-                <span id="dash-status" class="bg-green-50 text-green-600 text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">● LIVE</span>
-            </div>
-            <div class="py-4 space-y-2 text-xs border-b border-gray-100">
-                <div class="flex justify-between"><span class="text-gray-400">Phone</span><span class="font-semibold text-gray-700">+233 50 ••• 4144</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">Language</span><span id="dash-lang" class="font-semibold text-gray-700">-</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">Current Step</span><span id="dash-step" class="font-semibold text-gray-700">-</span></div>
-            </div>
-            <div class="py-4 border-b border-gray-100">
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Triage Assessment</span>
-                <div id="triage-box" class="bg-gray-50 rounded-xl p-3 text-xs text-gray-500 italic">No input yet...</div>
-            </div>
-            <div id="dashboard-actions" class="grid grid-cols-2 gap-3 pt-4 hidden">
-                <button onclick="alert('Simulating direct call loop to patient...')" class="bg-red-600 text-white font-bold text-xs py-2.5 rounded-xl shadow-md">Call Now</button>
-                <button onclick="triggerEscalation()" class="border border-gray-200 font-bold text-xs py-2.5 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100">Escalate Case</button>
-            </div>
-        </div>
-    </main>
-
-    <script>
-        // Using an open, zero-auth key storage for synchronization
-        const SYNC_URL = "https://kvdb.io/MN7ZgWvT9Yv7pXWq6Zq4z8/samacare_live_session";
-
+/ ── USSD FLOW DATA ─────────────────────────────────────────────────
         const flowData = {
             LANG: {
-                text: "Welcome to SamaCare.\n\nChoose language:\n1. English\n2. Twi\n3. Hausa",
-                options: [{t:"1. English", v:"English"}, {t:"2. Twi", v:"Twi"}, {t:"3. Hausa", v:"Hausa"}]
+                text: "SamaCare v1.0\n*929#\n\nWelcome! Choose language:\n\n1. English\n2. Twi\n3. Hausa\n4. Ga\n5. Ewe",
+                options: [
+                    {t:"1. English", v:"English"},
+                    {t:"2. Twi",     v:"Twi"},
+                    {t:"3. Hausa",   v:"Hausa"},
+                    {t:"4. Ga",      v:"Ga"},
+                    {t:"5. Ewe",     v:"Ewe"}
+                ]
             },
-            MENU: {
-                text: "SamaCare Main Menu\n\n1. ANC Check-in\n2. Report a Symptom\n3. Exit",
-                options: [{t:"1. ANC Check-in", n:"ANC"}, {t:"2. Report a Symptom", n:"SYMPTOMS"}, {t:"3. Exit", n:"LANG"}]
+            TRIAGE: {
+                text: "SamaCare v1.0\n\nGood morning, Abena!\nHow are you feeling today?\n\n1. Fine, no issues\n2. I have some pain\n3. I feel dizzy\n4. I am bleeding\n5. Baby not moving",
+                options: [
+                    {t:"1. Fine, no issues",   n:"FINE",             a:"Normal"},
+                    {t:"2. I have some pain",  n:"CRITICAL_PAIN",    a:"ALERT_PAIN"},
+                    {t:"3. I feel dizzy",       n:"CRITICAL_DIZZY",   a:"ALERT_DIZZY"},
+                    {t:"4. I am bleeding",      n:"CRITICAL_BLEED",   a:"ALERT_BLEED"},
+                    {t:"5. Baby not moving",    n:"CRITICAL_MOVEMENT",a:"ALERT_MOVEMENT"}
+                ]
             },
-            ANC: {
-                text: "Antenatal Care Dashboard\n\nYour next scheduled clinical check-in is pending.\n\n1. Log weekly updates\n0. Back",
-                options: [{t:"1. Log weekly updates", n:"LOG_WEEK"}, {t:"0. Back", n:"MENU"}]
+            FINE: {
+                text: "Thank you for updating\nSamaCare.\n\nYour routine check-in has\nbeen logged successfully.\n\n0. Back to main menu",
+                options: [{t:"0. Back", n:"TRIAGE", a:"Normal"}]
             },
-            LOG_WEEK: {
-                text: "Weekly ANC Update:\n\nAre you taking your prescribed supplements daily?\n1. Yes\n2. No",
-                options: [{t:"1. Yes", n:"SUCCESS"}, {t:"2. No", n:"SUCCESS"}]
+            CRITICAL_PAIN: {
+                text: "⚠️ CRITICAL ALERT\n\nSevere pain detected.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
+                options: []
             },
-            SUCCESS: {
-                text: "Thank you.\nYour records have been uploaded successfully to the clinic server.\n\n0. Exit",
-                options: [{t:"0. Exit", n:"LANG"}]
+            CRITICAL_DIZZY: {
+                text: "⚠️ CRITICAL ALERT\n\nSevere dizziness detected.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
+                options: []
             },
-            SYMPTOMS: {
-                text: "Select triage symptom:\n1. Headache/Fever\n2. Reduced baby movement",
-                options: [{t:"1. Headache/Fever", n:"SUCCESS"}, {t:"2. Reduced baby movement", n:"CRITICAL"}]
+            CRITICAL_BLEED: {
+                text: "⚠️ CRITICAL ALERT\n\nBleeding detected.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
+                options: []
             },
-            CRITICAL: {
-                text: "⚠️ CRITICAL ALERT\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.",
+            CRITICAL_MOVEMENT: {
+                text: "⚠️ CRITICAL ALERT\n\nReduced baby movement.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
                 options: []
             },
             ESCALATED: {
-                text: "🚨 CASE ESCALATED BY CLINICIAN\n\nEmergency services and local regional head nurses have been dispatched.",
+                text: "🚨 CASE ESCALATED\n\nEmergency care services and\nregional healthcare teams\nhave been patched into this\nsession.\n\nClinician is responding.",
                 options: []
             }
         };
 
+        // ── CLOUD STATE ────────────────────────────────────────────────────
         function updateCloudState(newState) {
-            fetch(SYNC_URL, {
-                method: 'POST',
+            if (CONFIG.BIN_ID === "YOUR_BIN_ID_HERE") {
+                // Offline mode — just render locally
+                renderSimulator(newState.step, newState.lang);
+                renderDashboard(newState.step, newState.lang, newState.alert);
+                return;
+            }
+            fetch(`https://api.jsonbin.io/v3/b/${CONFIG.BIN_ID}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key':$2a$10$9lS/0DswVaQU5zSzCzYpnuX7C6ZO5ggTZGA32qyxU7XQUes.YOwmu CONFIG.MASTER_KEY
+                },
                 body: JSON.stringify(newState)
-            }).catch(err => console.log("Sync delay..."));
+            }).catch(() => console.log("Cloud buffer — running locally"));
         }
 
         function startLiveSync() {
-            // Check state every 900ms
+            // Update clock
             setInterval(() => {
-                fetch(SYNC_URL)
-                .then(res => res.json())
-                .then(data => {
+                const t = new Date();
+                document.getElementById('phone-time').textContent =
+                    t.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+            }, 1000);
+
+            if (CONFIG.BIN_ID === "YOUR_BIN_ID_HERE") {
+                // Offline mode — render default state
+                renderSimulator('LANG', '');
+                renderDashboard('LANG', '', 'Normal');
+                document.getElementById('sync-label').textContent = 'Offline Mode';
+                document.getElementById('sync-dot').classList.replace('bg-green-400','bg-yellow-400');
+                return;
+            }
+
+            // Live sync
+            setInterval(() => {
+                fetch(`https://api.jsonbin.io/v3/b/${CONFIG.BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key':$2a$10$9lS/0DswVaQU5zSzCzYpnuX7C6ZO5ggTZGA32qyxU7XQUes.YOwmu CONFIG.MASTER_KEY }
+                })
+                .then(r => r.json())
+                .then(d => {
+                    const data = d.record;
                     if (data && data.step) {
                         renderSimulator(data.step, data.lang);
                         renderDashboard(data.step, data.lang, data.alert);
-                    } else {
-                        triggerReset();
                     }
                 })
                 .catch(() => {
-                    // Initialize if empty
-                    triggerReset();
+                    document.getElementById('sync-label').textContent = 'Reconnecting...';
                 });
-            }, 900);
+            }, 1100);
         }
 
+        // ── RENDER SIMULATOR ───────────────────────────────────────────────
         function renderSimulator(step, lang) {
-            const screen = document.getElementById('screen-text');
+            const screen  = document.getElementById('screen-text');
             const actions = document.getElementById('action-container');
             const current = flowData[step];
-            
-            screen.innerHTML = current.text;
+            if (!current) return;
+
+            // Alert colour on screen text
+            const isAlert = step.startsWith('CRITICAL_') || step === 'ESCALATED';
+            screen.className = isAlert
+                ? 'whitespace-pre-line leading-relaxed text-red-400'
+                : 'whitespace-pre-line leading-relaxed text-green-400';
+            screen.textContent = current.text;
             actions.innerHTML = '';
-            
+
             current.options.forEach(opt => {
                 const btn = document.createElement('button');
-                btn.className = "bg-white text-[#6B1D2F] border p-2 rounded-xl text-xs font-semibold text-left active:scale-95 transition";
-                btn.innerText = opt.t;
+                btn.className = "bg-gray-900 text-gray-100 border border-gray-700 p-2 rounded-xl text-xs font-mono text-left hover:bg-gray-800 transition";
+                btn.textContent = opt.t;
                 btn.onclick = () => {
-                    if(step === 'LANG') updateCloudState({step: 'MENU', lang: opt.v, alert: 'Normal'});
-                    else if(opt.n === 'CRITICAL') updateCloudState({step: 'CRITICAL', lang: lang, alert: 'CRITICAL_ALERT'});
-                    else updateCloudState({step: opt.n, lang: lang, alert: 'Normal'});
+                    if (step === 'LANG') updateCloudState({step:'TRIAGE', lang:opt.v, alert:'Normal'});
+                    else updateCloudState({step:opt.n, lang:lang, alert:opt.a});
                 };
                 actions.appendChild(btn);
             });
         }
 
+        // ── RENDER DASHBOARD ───────────────────────────────────────────────
         function renderDashboard(step, lang, alertState) {
-            document.getElementById('dash-lang').innerText = lang || "Not selected";
-            document.getElementById('dash-step').innerText = step;
-            
-            const triage = document.getElementById('triage-box');
-            const actions = document.getElementById('dashboard-actions');
-            const status = document.getElementById('dash-status');
+            document.getElementById('dash-lang').textContent  = lang  || '—';
+            document.getElementById('dash-step').textContent  = step  || '—';
 
-            if (alertState === 'CRITICAL_ALERT') {
-                triage.className = "bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-xs font-bold animate-pulse";
-                triage.innerHTML = "🚨 CRITICAL: Patient reported Reduced Baby Movement!";
+            const triage  = document.getElementById('triage-box');
+            const actions = document.getElementById('dashboard-actions');
+            const outcome = document.getElementById('outcome-panel');
+            const status  = document.getElementById('dash-status');
+
+            if (alertState && alertState.startsWith('ALERT_')) {
+                triage.className = "risk-critical rounded-xl p-3 text-xs font-bold";
                 actions.classList.remove('hidden');
-                status.className = "bg-red-100 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full animate-bounce";
+                outcome.classList.remove('hidden');
+                status.className = "bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full shake";
+
+                const msgs = {
+                    ALERT_PAIN:     "🚨 CRITICAL: Patient reported Severe Pain",
+                    ALERT_DIZZY:    "🚨 CRITICAL: Patient reported Severe Dizziness",
+                    ALERT_BLEED:    "🚨 CRITICAL: Patient reported Maternal Bleeding",
+                    ALERT_MOVEMENT: "🚨 CRITICAL: Patient reported Reduced Baby Movement"
+                };
+                triage.textContent = msgs[alertState] || "🚨 CRITICAL ALERT";
+
             } else if (alertState === 'ESCALATED') {
-                triage.className = "bg-amber-100 border border-amber-300 text-amber-800 rounded-xl p-3 text-xs font-bold";
-                triage.innerHTML = "⚠️ ESCALATED: Emergency services alerted via dashboard trigger overrides.";
+                triage.className = "risk-high rounded-xl p-3 text-xs font-bold";
+                triage.textContent = "⚠️ ESCALATED: Auto-escalation active. Regional clinical anchors notified.";
                 actions.classList.add('hidden');
+                outcome.classList.remove('hidden');
+                status.className = "bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full";
+
             } else {
-                triage.className = "bg-gray-50 text-gray-500 italic rounded-xl p-3 text-xs";
-                triage.innerHTML = step === 'LANG' ? "Waiting for patient input..." : "Monitoring active patient telemetry...";
+                triage.className = "risk-normal rounded-xl p-3 text-xs italic";
+                triage.textContent = step === 'LANG'
+                    ? "Waiting for mother to dial in..."
+                    : "Monitoring active patient telemetry...";
                 actions.classList.add('hidden');
-                status.className = "bg-green-50 text-green-600 text-xs font-bold px-2.5 py-1 rounded-full animate-pulse";
+                outcome.classList.add('hidden');
+                status.className = "bg-green-50 text-green-600 text-xs font-bold px-3 py-1 rounded-full pulse";
             }
         }
 
+        // ── ACTIONS ────────────────────────────────────────────────────────
         function triggerReset() {
-            updateCloudState({step: 'LANG', lang: '', alert: 'Normal'});
+            updateCloudState({step:'LANG', lang:'', alert:'Normal'});
         }
 
         function triggerEscalation() {
-            fetch(SYNC_URL)
-            .then(res => res.json())
-            .then(data => {
-                updateCloudState({step: 'ESCALATED', lang: data.lang, alert: 'ESCALATED'});
-            });
+            updateCloudState({step:'ESCALATED', lang:'Selected', alert:'ESCALATED'});
         }
 
+        function markOutcome(outcome) {
+            alert(`Outcome marked: "${outcome}"\n\nThis would be saved to the database and close this case.`);
+        }
+
+        // ── TABS ───────────────────────────────────────────────────────────
+        function showTab(name) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('text-gray-600');
+            });
+            document.getElementById('tab-' + name).classList.remove('hidden');
+            event.currentTarget.classList.add('active');
+            event.currentTarget.classList.remove('text-gray-600');
+        }
+
+        // ── BOOT ───────────────────────────────────────────────────────────
         window.onload = startLiveSync;
     </script>
 </body>
