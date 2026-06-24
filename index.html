@@ -1,275 +1,1056 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SamaCare Live Engine</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SamaCare — *929#</title>
+<style>
+:root {
+  --teal:    #1a4a47;
+  --teal-dk: #0f2e2b;
+  --teal-md: #2d6b66;
+  --teal-lt: #3d8a84;
+  --cream:   #f4f2ee;
+  --sand:    #e8e4dc;
+  --critical:#c0392b;
+  --crit-bg: #fdf2f2;
+  --crit-bd: #f5c6c6;
+  --warn:    #b45309;
+  --warn-bg: #fffbeb;
+  --warn-bd: #fcd34d;
+  --ok:      #15803d;
+  --ok-bg:   #f0fdf4;
+  --ok-bd:   #86efac;
+  --blue:    #1d4ed8;
+  --blue-bg: #eff6ff;
+  --blue-bd: #93c5fd;
+  --card:    #ffffff;
+  --border:  #e5e7eb;
+  --text:    #111827;
+  --muted:   #6b7280;
+  --small:   #9ca3af;
+  --sidebar: #122a28;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cream);color:var(--text);display:flex;min-height:100vh;}
+
+/* ── SIDEBAR ─────────────────────────────────────── */
+#sidebar{
+  width:220px;min-width:220px;background:var(--sidebar);display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;height:100vh;z-index:100;transition:.3s;
+}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-logo .brand{color:#fff;font-weight:700;font-size:1.1rem;letter-spacing:-.3px;}
+.sb-logo .brand span{color:#5dbfb8;}
+.sb-status{font-size:.65rem;color:#5dbfb8;margin-top:2px;font-weight:600;}
+.sb-duty{padding:8px 14px;font-size:.65rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;}
+.sb-duty .staff-name{color:#d1fae5;font-weight:700;font-size:.75rem;text-transform:none;letter-spacing:0;}
+.sb-menu{flex:1;overflow-y:auto;padding:6px 0;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;color:#9ca3af;font-size:.82rem;font-weight:500;border-left:3px solid transparent;transition:.15s;position:relative;}
+.sb-item:hover{background:rgba(255,255,255,.06);color:#d1fae5;}
+.sb-item.active{color:#fff;background:rgba(93,191,184,.12);border-left-color:#5dbfb8;}
+.sb-item .badge{background:var(--critical);color:#fff;font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:auto;}
+.sb-bottom{padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);}
+.sb-bottom .shift-btn{width:100%;background:rgba(255,255,255,.07);color:#9ca3af;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px;font-size:.75rem;cursor:pointer;}
+.sb-bottom .shift-btn:hover{background:rgba(255,255,255,.12);color:#fff;}
+
+/* ── MAIN CONTENT ────────────────────────────────── */
+#app{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+
+/* ── TOP BAR ─────────────────────────────────────── */
+#topbar{background:#fff;border-bottom:1px solid var(--border);padding:10px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.tb-breadcrumb{font-size:.8rem;color:var(--muted);}
+.tb-breadcrumb b{color:var(--text);}
+.tb-right{display:flex;align-items:center;gap:14px;}
+.tb-clock{font-size:.8rem;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;}
+.tb-bell{position:relative;cursor:pointer;}
+.tb-bell svg{width:20px;height:20px;color:var(--muted);}
+.tb-bell .dot{position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--critical);border-radius:50%;border:2px solid #fff;}
+.tb-avatar{width:32px;height:32px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:700;}
+.live-pill{display:flex;align-items:center;gap:5px;background:#f0fdf4;border:1px solid var(--ok-bd);border-radius:99px;padding:3px 10px;font-size:.68rem;font-weight:700;color:var(--ok);}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pulse 1.4s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── PAGE VIEWS ──────────────────────────────────── */
+.page{display:none;flex:1;padding:22px;}
+.page.active{display:flex;flex-direction:column;gap:18px;}
+
+/* ── CARDS ───────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;}
+.card-title{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;}
+
+/* ── STAT TILES ──────────────────────────────────── */
+.stat-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
+.stat-tile{background:linear-gradient(145deg,#2a3f3e,#1a2f2d);border-radius:14px;padding:14px;color:#fff;cursor:pointer;border:1px solid rgba(255,255,255,.06);transition:.2s;}
+.stat-tile:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.25);}
+.stat-tile.crit{border-top:3px solid var(--critical);}
+.stat-tile.warn{border-top:3px solid var(--warn);}
+.stat-tile.ok  {border-top:3px solid var(--ok);}
+.stat-tile.blue{border-top:3px solid #3b82f6;}
+.stat-tile .num{font-size:2rem;font-weight:800;line-height:1;}
+.stat-tile .lbl{font-size:.68rem;color:rgba(255,255,255,.6);margin-top:4px;}
+.stat-tile .sub{font-size:.6rem;color:rgba(255,255,255,.4);margin-top:2px;}
+
+/* ── BADGE ───────────────────────────────────────── */
+.badge-critical{background:var(--crit-bg);color:var(--critical);border:1px solid var(--crit-bd);border-radius:99px;padding:2px 9px;font-size:.65rem;font-weight:700;}
+.badge-high    {background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-bd);border-radius:99px;padding:2px 9px;font-size:.65rem;font-weight:700;}
+.badge-ok      {background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-bd);border-radius:99px;padding:2px 9px;font-size:.65rem;font-weight:700;}
+.badge-blue    {background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);border-radius:99px;padding:2px 9px;font-size:.65rem;font-weight:700;}
+.badge-gray    {background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:99px;padding:2px 9px;font-size:.65rem;font-weight:700;}
+
+/* ── ALERT CARDS (urgent queue) ─────────────────── */
+.alert-card{border-radius:12px;padding:14px 16px;margin-bottom:10px;border-left:4px solid;display:flex;gap:14px;align-items:flex-start;}
+.alert-card.crit{background:var(--crit-bg);border-color:var(--critical);}
+.alert-card.warn{background:var(--warn-bg);border-color:var(--warn);}
+.ac-ring{width:46px;height:46px;border-radius:50%;border:3px solid var(--critical);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:var(--critical);flex-shrink:0;position:relative;}
+.ac-ring .sla-badge{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid var(--crit-bd);border-radius:99px;padding:1px 6px;font-size:.55rem;font-weight:700;color:var(--critical);white-space:nowrap;}
+.ac-info{flex:1;}
+.ac-phone{font-weight:700;font-size:.95rem;}
+.ac-meta{font-size:.7rem;color:var(--muted);margin-top:2px;}
+.ac-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.btn{border:none;cursor:pointer;border-radius:9px;font-weight:600;transition:.15s;}
+.btn-call{background:var(--teal);color:#fff;padding:7px 13px;font-size:.75rem;}
+.btn-call:hover{background:var(--teal-md);}
+.btn-escalate{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-bd);padding:7px 13px;font-size:.75rem;}
+.btn-escalate:hover{background:#fef3c7;}
+.btn-ack{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:7px 13px;font-size:.75rem;}
+.btn-ack:hover{background:#e5e7eb;}
+.btn-view{background:#fff;color:var(--teal);border:1px solid var(--teal-lt);padding:7px 13px;font-size:.75rem;}
+.btn-view:hover{background:#f0fdfd;}
+.btn-primary{background:var(--teal);color:#fff;padding:9px 18px;font-size:.8rem;border-radius:10px;}
+.btn-primary:hover{background:var(--teal-md);}
+.btn-danger{background:var(--critical);color:#fff;padding:9px 18px;font-size:.8rem;border-radius:10px;}
+.btn-danger:hover{background:#a93226;}
+.btn-outline{background:#fff;color:var(--text);border:1px solid var(--border);padding:9px 18px;font-size:.8rem;border-radius:10px;}
+.btn-outline:hover{background:#f9fafb;}
+
+/* ── TABS ────────────────────────────────────────── */
+.tabs{display:flex;gap:4px;padding:4px;background:#f3f4f6;border-radius:10px;width:fit-content;}
+.tab{padding:6px 14px;border-radius:7px;font-size:.75rem;font-weight:600;cursor:pointer;color:var(--muted);border:none;background:none;transition:.15s;}
+.tab.active{background:#fff;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+
+/* ── FILTER TABS ─────────────────────────────────── */
+.filter-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.ftab{padding:5px 12px;border-radius:99px;font-size:.72rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--muted);transition:.15s;}
+.ftab.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+.ftab .n{font-size:.65rem;margin-left:3px;opacity:.7;}
+
+/* ── TIMELINE ────────────────────────────────────── */
+.timeline{position:relative;padding-left:24px;}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border);}
+.tl-item{position:relative;padding-bottom:18px;}
+.tl-dot{position:absolute;left:-19px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--ok-bd);border:2px solid #fff;}
+.tl-dot.crit{background:var(--critical);}
+.tl-dot.warn{background:var(--warn);}
+.tl-time{font-size:.65rem;color:var(--small);margin-bottom:2px;}
+.tl-text{font-size:.8rem;font-weight:600;}
+.tl-sub{font-size:.72rem;color:var(--muted);margin-top:2px;}
+
+/* ── CHART BARS ──────────────────────────────────── */
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:80px;}
+.bar{flex:1;background:var(--teal-lt);border-radius:4px 4px 0 0;transition:.3s;opacity:.8;}
+.bar:hover{opacity:1;}
+.bar-labels{display:flex;gap:6px;margin-top:4px;}
+.bar-label{flex:1;font-size:.58rem;color:var(--small);text-align:center;}
+
+/* ── HORIZONTAL BAR CHART ────────────────────────── */
+.hbar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.hbar-lbl{font-size:.72rem;color:var(--muted);width:140px;text-align:right;}
+.hbar-track{flex:1;height:10px;background:#f3f4f6;border-radius:99px;overflow:hidden;}
+.hbar-fill{height:100%;background:var(--critical);border-radius:99px;transition:width .6s;}
+.hbar-fill.teal{background:var(--teal-lt);}
+.hbar-val{font-size:.72rem;font-weight:700;width:30px;text-align:right;}
+
+/* ── CLASSIFICATION BARS ─────────────────────────── */
+.class-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+.class-lbl{font-size:.75rem;font-weight:600;width:80px;}
+.class-track{flex:1;height:8px;background:#f3f4f6;border-radius:99px;overflow:hidden;}
+.class-fill{height:100%;border-radius:99px;}
+.class-pct{font-size:.72rem;font-weight:700;width:40px;text-align:right;color:var(--muted);}
+
+/* ── MAP ─────────────────────────────────────────── */
+#map-container{background:linear-gradient(135deg,#e0f2f1,#b2dfdb);border-radius:12px;height:180px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.map-pin{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--critical);border:2px solid #fff;box-shadow:0 0 0 4px rgba(192,57,43,.2);}
+.map-label{position:absolute;font-size:.6rem;font-weight:700;color:var(--critical);white-space:nowrap;}
+
+/* ── PATIENT RECORD ──────────────────────────────── */
+.pr-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.pr-phone{font-size:1.1rem;font-weight:700;}
+.pr-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.pr-field{background:#f9fafb;border-radius:10px;padding:10px 12px;}
+.pr-field label{font-size:.62rem;font-weight:700;color:var(--small);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px;}
+.pr-field value{font-size:.85rem;font-weight:700;color:var(--text);}
+
+/* ── PHONE SIMULATOR ─────────────────────────────── */
+.phone-shell{background:#111;border-radius:40px;border:6px solid #374151;box-shadow:0 30px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);padding:20px 18px;width:280px;min-height:520px;display:flex;flex-direction:column;}
+.phone-screen{background:#000;border:1px solid #1a2a1a;border-radius:18px;padding:14px;font-family:'Courier New',monospace;font-size:.72rem;min-height:240px;flex:1;color:#00ff41;display:flex;flex-direction:column;justify-content:space-between;}
+.phone-screen.alert-mode{color:#ff4444;}
+.phone-btns{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+.phone-btn{background:#1a1a1a;border:1px solid #333;color:#e0e0e0;border-radius:10px;padding:8px 10px;font-size:.72rem;font-family:'Courier New',monospace;text-align:left;cursor:pointer;transition:.1s;}
+.phone-btn:hover{background:#2a2a2a;border-color:#555;}
+.phone-status{font-size:.65rem;color:#666;display:flex;justify-content:space-between;margin-bottom:8px;}
+
+/* ── MODAL ───────────────────────────────────────── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:18px;padding:24px;width:90%;max-width:420px;max-height:90vh;overflow-y:auto;}
+.modal-header{font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+.modal-title{font-size:1.2rem;font-weight:700;margin-bottom:18px;}
+.modal-option{border:1px solid var(--border);border-radius:12px;padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:8px;transition:.15s;}
+.modal-option:hover,.modal-option.selected{border-color:var(--warn);background:var(--warn-bg);}
+.modal-option.selected .check{display:block;}
+.modal-option .check{display:none;margin-left:auto;color:var(--warn);}
+.modal-input{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:.85rem;outline:none;margin-bottom:10px;}
+.modal-input:focus{border-color:var(--teal);}
+textarea.modal-input{min-height:80px;resize:vertical;}
+.modal-actions{display:flex;gap:10px;margin-top:6px;}
+.modal-actions button{flex:1;}
+
+/* ── CALL MODAL ──────────────────────────────────── */
+.call-modal-top{background:var(--teal);border-radius:14px;padding:24px;text-align:center;color:#fff;margin-bottom:16px;}
+.call-icon{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;}
+.call-number{font-size:1.3rem;font-weight:700;letter-spacing:.05em;}
+.call-status{font-size:.75rem;color:rgba(255,255,255,.7);margin-top:4px;}
+
+/* ── SETTINGS ────────────────────────────────────── */
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);}
+.setting-row:last-child{border-bottom:none;}
+.setting-info h4{font-size:.88rem;font-weight:600;}
+.setting-info p{font-size:.75rem;color:var(--muted);margin-top:2px;}
+.toggle{width:44px;height:24px;background:#d1d5db;border-radius:99px;cursor:pointer;position:relative;transition:.2s;border:none;}
+.toggle.on{background:var(--teal);}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle.on::after{left:23px;}
+
+/* ── OVERDUE BANNER ──────────────────────────────── */
+.overdue-banner{background:var(--crit-bg);border:1px solid var(--crit-bd);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;}
+.overdue-banner svg{color:var(--critical);flex-shrink:0;}
+.ob-text{flex:1;}
+.ob-text h4{font-size:.85rem;font-weight:700;color:var(--critical);}
+.ob-text p{font-size:.72rem;color:var(--warn);margin-top:2px;}
+.ob-link{font-size:.75rem;font-weight:700;color:var(--critical);cursor:pointer;text-decoration:underline;white-space:nowrap;}
+
+/* ── ANC VISITS ──────────────────────────────────── */
+.anc-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f3f4f6;}
+.anc-row:last-child{border-bottom:none;}
+.anc-phone{font-size:.82rem;font-weight:600;}
+.anc-date{font-size:.75rem;color:var(--muted);}
+
+/* ── ACTIVITY LOG ────────────────────────────────── */
+.activity-item{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid #f9fafb;}
+.activity-dot{width:8px;height:8px;border-radius:50%;background:var(--critical);flex-shrink:0;margin-top:4px;}
+.activity-dot.ok{background:var(--ok);}
+.activity-dot.blue{background:var(--blue);}
+.activity-text{font-size:.75rem;flex:1;}
+.activity-text b{font-weight:600;}
+.activity-time{font-size:.65rem;color:var(--small);}
+
+/* ── SHIFT REPORT ────────────────────────────────── */
+.shift-stat{background:linear-gradient(135deg,#2a3f3e,#1a2f2d);border-radius:12px;padding:14px;color:#fff;}
+.shift-stat .n{font-size:2rem;font-weight:800;}
+.shift-stat .l{font-size:.7rem;color:rgba(255,255,255,.6);margin-top:2px;}
+
+/* ── USSD DEMO LAYOUT ────────────────────────────── */
+.ussd-layout{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+
+/* ── REFERRAL FORM ───────────────────────────────── */
+select.modal-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:14px;padding-right:30px;}
+
+/* ── AUTO-ESCALATION COUNTDOWN ───────────────────── */
+.countdown-ring{width:54px;height:54px;}
+.countdown-ring circle{fill:none;stroke-width:4;transition:stroke-dashoffset .5s;}
+.countdown-text{font-size:.75rem;font-weight:700;text-anchor:middle;dominant-baseline:middle;}
+
+/* ── RESPONSIVE ──────────────────────────────────── */
+@media(max-width:900px){
+  #sidebar{width:60px;min-width:60px;}
+  .sb-logo .brand,.sb-item span,.sb-duty,.sb-bottom .shift-btn span{display:none;}
+  .sb-item{justify-content:center;padding:10px 0;}
+  #app{margin-left:60px;}
+  .stat-grid{grid-template-columns:repeat(3,1fr);}
+  .ussd-layout{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  .stat-grid{grid-template-columns:repeat(2,1fr);}
+}
+
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+.shake{animation:shake .5s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fadein{animation:fadeIn .3s ease;}
+
+/* escalation progress ring */
+.esc-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+</style>
 </head>
-<body class="p-4 md:p-8 min-h-screen bg-[#FAF6F0] flex flex-col justify-between">
+<body>
 
-    <header class="max-w-6xl mx-auto w-full text-center mb-6">
-        <h1 class="text-2xl font-bold text-[#6B1D2F] mb-1">SamaCare Live Engine</h1>
-        <p class="text-xs text-green-600 font-semibold flex items-center justify-center gap-1">
-            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Ultra-Stable JSON Cloud Link Active
-        </p>
-    </header>
+<!-- ═══════════════════════════════════════════ SIDEBAR -->
+<nav id="sidebar">
+  <div class="sb-logo">
+    <div class="brand">Sama<span>Care</span></div>
+    <div class="sb-status">● *929# · LIVE</div>
+  </div>
+  <div class="sb-duty">
+    <div>On duty now</div>
+    <div class="staff-name" style="margin-top:3px;">Staff</div>
+    <div style="font-size:.6rem;color:#5dbfb8;margin-top:1px;" id="shift-label">Shift: 06:00–18:00</div>
+    <div style="font-size:.6rem;color:#ef4444;margin-top:1px;" id="off-shift-label" style="display:none;"></div>
+  </div>
+  <div class="sb-menu">
+    <div class="sb-item active" onclick="nav('dashboard')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke-width="2"/></svg>
+      <span>My Dashboard</span>
+    </div>
+    <div class="sb-item" onclick="nav('urgent')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      <span>Urgent Queue</span>
+      <span class="badge" id="urgent-badge">2</span>
+    </div>
+    <div class="sb-item" onclick="nav('refer')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M5 12h14M12 5l7 7-7 7"/></svg>
+      <span>Referrals</span>
+    </div>
+    <div class="sb-item" onclick="nav('records')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      <span>Patient Records</span>
+    </div>
+    <div class="sb-item" onclick="nav('anc')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <span>ANC Visits</span>
+    </div>
+    <div class="sb-item" onclick="nav('shift')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0120 9.414V19a2 2 0 01-2 2z"/></svg>
+      <span>Shift Reports</span>
+    </div>
+    <div class="sb-item" onclick="nav('ussd')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+      <span>USSD Simulator</span>
+    </div>
+    <div class="sb-item" onclick="nav('languages')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+      <span>USSD Languages</span>
+    </div>
+    <div class="sb-item" onclick="nav('settings')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg>
+      <span>Settings</span>
+    </div>
+  </div>
+  <div class="sb-bottom">
+    <button class="shift-btn" onclick="toggleShift()"><span>⏹ End Shift</span></button>
+  </div>
+</nav>
 
-    <main class="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-start my-auto">
-        
-        <div class="flex justify-center items-center">
-            <div class="w-72 bg-[#111111] text-[#FAF6F0] rounded-[40px] p-6 shadow-2xl border-[6px] border-gray-800 flex flex-col justify-between min-h-[510px]">
-                <div class="text-[10px] opacity-75 mb-4 flex justify-between font-mono">
-                    <span>MTN • GH • 2G</span>
-                    <span id="phone-time">07:14 AM</span>
-                </div>
-                <div class="flex-grow flex flex-col justify-start">
-                    <div class="bg-black border border-gray-800 text-gray-100 rounded-2xl p-4 font-mono text-[11px] shadow-inner mb-4 min-h-[220px] flex flex-col justify-between">
-                        <div id="screen-text" class="whitespace-pre-line leading-relaxed">Loading stable sync...</div>
-                    </div>
-                    <div id="action-container" class="grid grid-cols-1 gap-2"></div>
-                </div>
-                <button onclick="triggerReset()" class="text-[11px] text-red-400 hover:text-red-300 mt-4 font-semibold font-mono">Reset Simulation (*929#)</button>
-            </div>
+<!-- ═══════════════════════════════════════════ MAIN -->
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="tb-breadcrumb"><span id="tb-path">SamaCare › <b>My Dashboard</b></span></div>
+    <div class="tb-right">
+      <div class="live-pill"><div class="live-dot"></div> LIVE</div>
+      <div class="tb-clock" id="tb-clock">—</div>
+      <div class="tb-bell" onclick="nav('urgent')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <div class="dot"></div>
+      </div>
+      <div class="tb-avatar">SC</div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: DASHBOARD ═══════════════════════════ -->
+  <div class="page active" id="page-dashboard">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h1 style="font-size:1.4rem;font-weight:800;">My Triage Queue</h1>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:2px;">📍 Ghana · Staff</p>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);text-align:right;">
+        <div id="dash-date" style="font-weight:600;"></div>
+        <div id="dash-time" style="font-size:.9rem;font-weight:800;color:var(--text);"></div>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stat-grid">
+      <div class="stat-tile crit" onclick="nav('urgent')">
+        <div class="num" id="stat-checkins">4</div>
+        <div class="lbl">Check-ins Today</div>
+        <div class="sub">USSD *929#</div>
+      </div>
+      <div class="stat-tile crit" onclick="nav('urgent')">
+        <div class="num" id="stat-critical">2</div>
+        <div class="lbl">Critical</div>
+        <div class="sub">SLA: 15 min</div>
+      </div>
+      <div class="stat-tile warn">
+        <div class="num" id="stat-warning">0</div>
+        <div class="lbl">Warning</div>
+        <div class="sub">SLA: 60 min</div>
+      </div>
+      <div class="stat-tile ok">
+        <div class="num" id="stat-women">13</div>
+        <div class="lbl">Women Protected</div>
+        <div class="sub">All enrolled</div>
+      </div>
+      <div class="stat-tile blue">
+        <div class="num" id="stat-sessions">23</div>
+        <div class="lbl">Total Sessions</div>
+        <div class="sub">USSD *929#</div>
+      </div>
+      <div class="stat-tile ok">
+        <div class="num" id="stat-newweek">13</div>
+        <div class="lbl">New This Week</div>
+        <div class="sub">Enrolled</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <!-- Left Column -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <!-- Activity Chart -->
+        <div class="card">
+          <div class="card-title">Last 7 days · USSD *929# interactions</div>
+          <div class="bar-chart" id="weekly-chart"></div>
+          <div class="bar-labels" id="weekly-labels"></div>
         </div>
 
-        <div class="bg-white rounded-3xl p-6 shadow-xl border border-gray-100 w-full max-w-md mx-auto">
-            <div class="flex justify-between items-center pb-4 border-b border-gray-100">
-                <div>
-                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Clinician Triage View</span>
-                    <h2 class="text-xl font-bold text-gray-800">Live Case Tracking</h2>
-                </div>
-                <span id="dash-status" class="bg-green-50 text-green-600 text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">● LIVE</span>
-            </div>
-            <div class="py-4 space-y-2 text-xs border-b border-gray-100">
-                <div class="flex justify-between"><span class="text-gray-400">Phone</span><span class="font-semibold text-gray-700">+233 50 ••• 5710</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">Language</span><span id="dash-lang" class="font-semibold text-gray-700">-</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">Current Step</span><span id="dash-step" class="font-semibold text-gray-700">-</span></div>
-            </div>
-            <div class="py-4 border-b border-gray-100">
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Triage Assessment</span>
-                <div id="triage-box" class="bg-gray-50 rounded-xl p-3 text-xs text-gray-500 italic">No input yet...</div>
-            </div>
-            <div id="dashboard-actions" class="grid grid-cols-2 gap-3 pt-4 hidden">
-                <button onclick="alert('Simulating direct call loop to patient...')" class="bg-red-600 text-white font-bold text-xs py-2.5 rounded-xl">Call Now</button>
-                <button onclick="triggerEscalation()" class="border border-gray-200 font-bold text-xs py-2.5 rounded-xl bg-amber-50 text-amber-700">Escalate Case</button>
-            </div>
-            <div id="outcome-panel" class="pt-4 hidden border-t border-gray-100 mt-4">
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Resolve Case</span>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="markOutcome('Admitted')" class="border p-2 rounded-xl text-gray-700 hover:bg-gray-50">Admitted</button>
-                    <button onclick="markOutcome('Discharged')" class="border p-2 rounded-xl text-gray-700 hover:bg-gray-50">Discharged</button>
-                </div>
-            </div>
+        <!-- Patient Classifications -->
+        <div class="card">
+          <div class="card-title">Current patient classifications</div>
+          <div class="class-row">
+            <div class="class-lbl" style="color:var(--critical);">CRITICAL</div>
+            <div class="class-track"><div class="class-fill" style="width:31%;background:var(--critical);"></div></div>
+            <div class="class-pct">4 (31%)</div>
+          </div>
+          <div class="class-row">
+            <div class="class-lbl" style="color:var(--warn);">HIGH</div>
+            <div class="class-track"><div class="class-fill" style="width:8%;background:var(--warn);"></div></div>
+            <div class="class-pct">1 (8%)</div>
+          </div>
+          <div class="class-row">
+            <div class="class-lbl" style="color:#6b7280;">MEDIUM</div>
+            <div class="class-track"><div class="class-fill" style="width:0%;background:#9ca3af;"></div></div>
+            <div class="class-pct">0 (0%)</div>
+          </div>
+          <div class="class-row">
+            <div class="class-lbl" style="color:var(--ok);">LOW</div>
+            <div class="class-track"><div class="class-fill" style="width:62%;background:var(--ok);"></div></div>
+            <div class="class-pct">8 (62%)</div>
+          </div>
         </div>
-    </main>
+      </div>
+
+      <!-- Right Column -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <!-- Urgent Alerts -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div class="card-title" style="margin:0;">⚠️ Urgent Alerts</div>
+            <span style="font-size:.72rem;font-weight:600;color:var(--critical);cursor:pointer;" onclick="nav('urgent')">View all →</span>
+          </div>
+          <div id="dash-alerts"></div>
+        </div>
+
+        <!-- Activity Snapshot -->
+        <div class="card">
+          <div class="card-title">Activity Snapshot</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div style="font-size:.8rem;color:var(--muted);">USSD Check-ins</div>
+            <div style="font-size:.8rem;font-weight:700;color:var(--teal);text-align:right;">4</div>
+            <div style="font-size:.8rem;color:var(--muted);">Critical Alerts</div>
+            <div style="font-size:.8rem;font-weight:700;color:var(--critical);text-align:right;">2</div>
+            <div style="font-size:.8rem;color:var(--muted);">New This Week</div>
+            <div style="font-size:.8rem;font-weight:700;color:var(--ok);text-align:right;">13</div>
+            <div style="font-size:.8rem;color:var(--muted);">Languages Supported</div>
+            <div style="font-size:.8rem;font-weight:700;text-align:right;">5</div>
+          </div>
+        </div>
+
+        <!-- Ghana Region Heat Map -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div class="card-title" style="margin:0;">📍 Ghana Region Heat Map</div>
+            <span style="font-size:.65rem;color:var(--muted);">PATIENTS</span>
+          </div>
+          <div id="map-container">
+            <div style="font-size:.75rem;font-weight:600;color:#444;z-index:1;">Ashanti ████████████████ 8</div>
+            <div class="map-pin" style="top:42%;left:48%;"></div>
+            <div class="map-pin" style="top:55%;left:52%;background:#b45309;"></div>
+            <div class="map-pin" style="top:38%;left:35%;background:#15803d;"></div>
+            <div class="map-pin" style="top:62%;left:60%;background:#15803d;"></div>
+            <div class="map-label" style="top:44%;left:50%;">Kumasi</div>
+            <div class="map-label" style="top:57%;left:54%;color:var(--warn);">Accra</div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+          <div class="card-title">Recent Activity</div>
+          <div id="recent-activity"></div>
+        </div>
+
+        <!-- Live USSD Sessions -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div class="card-title" style="margin:0;">⚡ Live USSD Sessions</div>
+            <span style="font-size:.65rem;color:var(--ok);font-weight:700;">+ LIVE</span>
+          </div>
+          <div id="live-sessions" style="font-size:.75rem;color:var(--muted);font-style:italic;">No active sessions in the last 5 min.<br>Try the USSD demo at *929#</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: URGENT QUEUE ═══════════════════════ -->
+  <div class="page" id="page-urgent">
+    <div>
+      <h1 style="font-size:1.4rem;font-weight:800;">Urgent Queue</h1>
+      <p style="font-size:.8rem;color:var(--muted);">Critical and high-risk patients requiring immediate attention</p>
+    </div>
+
+    <div class="overdue-banner" id="overdue-banner">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      <div class="ob-text">
+        <h4>1 alert past response time — escalate now</h4>
+        <p>Unacknowledged beyond the safe window (CRITICAL 15 min · HIGH 60 min). These mothers may still be waiting.</p>
+      </div>
+      <span class="ob-link" onclick="autoEscalate()">Review →</span>
+    </div>
+
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+      <div class="filter-tabs" id="urgent-filters">
+        <button class="ftab active" onclick="filterUrgent('all',this)">ALL <span class="n">2</span></button>
+        <button class="ftab" onclick="filterUrgent('overdue',this)">OVERDUE <span class="n">1</span></button>
+        <button class="ftab" onclick="filterUrgent('critical',this)">CRITICAL <span class="n">2</span></button>
+        <button class="ftab" onclick="filterUrgent('warning',this)">WARNING <span class="n">0</span></button>
+        <button class="ftab" onclick="filterUrgent('resolved',this)">RESOLVED <span class="n">2</span></button>
+      </div>
+      <!-- Auto-escalation countdown -->
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--crit-bg);border:1px solid var(--crit-bd);border-radius:10px;padding:6px 12px;">
+        <svg id="esc-svg" width="38" height="38" viewBox="0 0 38 38">
+          <circle cx="19" cy="19" r="16" fill="none" stroke="#fca5a5" stroke-width="3"/>
+          <circle id="esc-circle" cx="19" cy="19" r="16" fill="none" stroke="var(--critical)" stroke-width="3"
+            stroke-dasharray="100.5" stroke-dashoffset="0" stroke-linecap="round"
+            transform="rotate(-90 19 19)" style="transition:stroke-dashoffset .5s;"/>
+          <text id="esc-text" x="19" y="23" text-anchor="middle" font-size="9" font-weight="800" fill="var(--critical)">5:00</text>
+        </svg>
+        <div>
+          <div style="font-size:.65rem;font-weight:700;color:var(--critical);">AUTO-ESCALATE IN</div>
+          <div style="font-size:.68rem;color:var(--muted);">If no response</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="urgent-list"></div>
+  </div>
+
+  <!-- ═══ PAGE: REFERRALS ═══════════════════════════ -->
+  <div class="page" id="page-refer">
+    <h1 style="font-size:1.4rem;font-weight:800;">Referrals</h1>
+    <div class="card">
+      <div class="card-title">Recent Referrals</div>
+      <div id="referral-list"></div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: PATIENT RECORDS ═══════════════════ -->
+  <div class="page" id="page-records">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <h1 style="font-size:1.4rem;font-weight:800;">Patient Records</h1>
+      <div style="display:flex;gap:8px;">
+        <input id="search-records" type="text" placeholder="Search by phone…" style="border:1px solid var(--border);border-radius:9px;padding:7px 12px;font-size:.8rem;outline:none;width:180px;" oninput="filterRecords(this.value)">
+      </div>
+    </div>
+    <div id="records-list"></div>
+  </div>
+
+  <!-- ═══ PAGE: PATIENT DETAIL (hidden until opened) -->
+  <div class="page" id="page-patient">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+      <button class="btn btn-outline" onclick="nav('records')" style="padding:6px 12px;font-size:.75rem;">← Back</button>
+      <h1 style="font-size:1.3rem;font-weight:800;" id="pr-title">Patient Record</h1>
+      <span id="pr-badge" class="badge-critical">● CRITICAL</span>
+    </div>
+    <div id="patient-detail-content"></div>
+  </div>
+
+  <!-- ═══ PAGE: ANC VISITS ══════════════════════════ -->
+  <div class="page" id="page-anc">
+    <h1 style="font-size:1.4rem;font-weight:800;">ANC Visits</h1>
+    <div class="card">
+      <div class="card-title">Scheduled Antenatal Care Visits</div>
+      <div id="anc-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Schedule New Visit</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label style="font-size:.72rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Patient Phone</label>
+          <input id="anc-phone" type="text" placeholder="+233..." style="width:100%;border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:.82rem;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:.72rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Visit Date</label>
+          <input id="anc-date" type="date" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:.82rem;outline:none;">
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <label style="font-size:.72rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Notes</label>
+        <textarea id="anc-notes" placeholder="Visit notes…" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:.82rem;outline:none;min-height:60px;resize:vertical;"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="addAncVisit()" style="margin-top:10px;">Save Visit</button>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: SHIFT REPORTS ═══════════════════════ -->
+  <div class="page" id="page-shift">
+    <h1 style="font-size:1.4rem;font-weight:800;">Shift Report</h1>
+    <div style="font-size:.8rem;color:var(--muted);" id="shift-report-date">Sunday, 21 June 2026 · Shift 06:00–18:00</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+      <div class="shift-stat"><div class="n">4</div><div class="l">Sessions Today</div></div>
+      <div class="shift-stat"><div class="n">13</div><div class="l">New Enrollments</div></div>
+      <div class="shift-stat"><div class="n">3</div><div class="l">Alerts Resolved</div></div>
+      <div class="shift-stat"><div class="n">23</div><div class="l">Total Interactions</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="card">
+        <div class="card-title">Last 7 days</div>
+        <div class="bar-chart" id="shift-chart"></div>
+        <div class="bar-labels" id="shift-labels"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Alert triggers this period</div>
+        <div class="hbar-row"><div class="hbar-lbl">Bleeding</div><div class="hbar-track"><div class="hbar-fill" style="width:85%;"></div></div><div class="hbar-val">4</div></div>
+        <div class="hbar-row"><div class="hbar-lbl">Heavy Bleeding (diag.)</div><div class="hbar-track"><div class="hbar-fill" style="width:70%;"></div></div><div class="hbar-val">3</div></div>
+        <div class="hbar-row"><div class="hbar-lbl">Heavy Bleeding</div><div class="hbar-track"><div class="hbar-fill" style="width:55%;"></div></div><div class="hbar-val">2</div></div>
+        <div class="hbar-row"><div class="hbar-lbl">Pain</div><div class="hbar-track"><div class="hbar-fill" style="width:40%;"></div></div><div class="hbar-val">1</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: USSD SIMULATOR ══════════════════════ -->
+  <div class="page" id="page-ussd">
+    <div style="text-align:center;">
+      <h1 style="font-size:1.6rem;font-weight:800;color:var(--teal);">Interactive <em style="font-style:italic;">USSD</em> Demo</h1>
+      <p style="font-size:.82rem;color:var(--muted);max-width:480px;margin:.6rem auto 0;">A self-contained walkthrough of the *929# flow in five languages. The panel on the right shows exactly what a clinician sees when a session comes in.</p>
+    </div>
+    <!-- Language tabs -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div class="tabs" id="lang-tabs">
+        <button class="tab active" onclick="setSimLang('English',this)">🇬🇭 English</button>
+        <button class="tab" onclick="setSimLang('Twi',this)">🇬🇭 Twi</button>
+        <button class="tab" onclick="setSimLang('Hausa',this)">🇳🇬 Hausa</button>
+        <button class="tab" onclick="setSimLang('Ga',this)">🇬🇭 Ga</button>
+        <button class="tab" onclick="setSimLang('Ewe',this)">🇬🇭 Ewe</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="resetSim()" style="padding:7px 14px;font-size:.75rem;">↺ Reset (*929#)</button>
+      </div>
+    </div>
+    <div class="ussd-layout">
+      <!-- Phone -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <p style="font-size:.65rem;color:var(--muted);font-family:monospace;text-transform:uppercase;letter-spacing:.1em;">USSD Simulator — basic feature phone</p>
+        <div class="phone-shell">
+          <div class="phone-status">
+            <span>MTN · GH · 2G</span>
+            <span id="sim-clock">—</span>
+          </div>
+          <div class="phone-screen" id="sim-screen">
+            <div id="sim-text" style="white-space:pre-line;line-height:1.6;">Connecting to *929#...</div>
+          </div>
+          <div class="phone-btns" id="sim-btns"></div>
+          <button onclick="resetSim()" style="margin-top:10px;background:none;border:none;color:#ef4444;font-size:.72rem;font-family:monospace;cursor:pointer;">↺ Reset (*929#)</button>
+        </div>
+        <p style="font-size:.72rem;color:var(--muted);text-align:center;max-width:240px;">No app. No data plan. No smartphone required.<br>Works on any basic feature phone in Ghana.</p>
+      </div>
+      <!-- Clinician Triage View -->
+      <div>
+        <p style="font-size:.65rem;color:var(--muted);font-family:monospace;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">Clinician Triage View — Live</p>
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:14px;">
+            <div>
+              <div style="font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Live Case Tracking</div>
+              <h2 style="font-size:1.1rem;font-weight:800;">Clinician View</h2>
+              <div style="font-size:.7rem;color:var(--muted);">SamaCare · Live Doctor Dashboard</div>
+              <div style="font-size:.68rem;color:var(--teal);font-weight:600;margin-top:2px;">● *929# RECEIVING</div>
+            </div>
+            <span id="sim-dash-status" class="badge-ok" style="font-size:.68rem;">● DEMO</span>
+          </div>
+          <div style="font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Patient Session</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
+            <div style="font-size:.78rem;color:var(--muted);">Phone</div><div style="font-size:.78rem;font-weight:600;text-align:right;">+233 50 ••• 8876</div>
+            <div style="font-size:.78rem;color:var(--muted);">Language</div><div id="sim-dash-lang" style="font-size:.78rem;font-weight:600;text-align:right;">English</div>
+            <div style="font-size:.78rem;color:var(--muted);">Step</div><div id="sim-dash-step" style="font-size:.78rem;font-weight:600;text-align:right;">Language selection</div>
+          </div>
+          <div style="font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">AI Triage Result</div>
+          <div id="sim-triage" style="background:#f9fafb;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:.78rem;color:var(--muted);font-style:italic;margin-bottom:14px;">Waiting for patient input...</div>
+          <div id="sim-dash-actions" style="display:none;gap:8px;margin-bottom:14px;">
+            <button class="btn btn-danger" onclick="openCallModal('+233 50 ••• 8876')" style="flex:1;">📞 Call Patient</button>
+            <button class="btn btn-escalate btn" onclick="openEscalateModal()" style="flex:1;">🚨 Escalate Case</button>
+          </div>
+          <div style="font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Session Log</div>
+          <ul id="sim-log" style="font-size:.7rem;color:var(--muted);list-style:none;max-height:100px;overflow-y:auto;">
+            <li style="font-style:italic;">No activity yet</li>
+          </ul>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-start;">
+            <span style="font-size:.9rem;">🔒</span>
+            <p style="font-size:.65rem;color:var(--small);">Pseudonymous by design — phone number is the only identifier stored. No name, ID, address, or GPS collected.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- In the real system -->
+    <div class="card" style="margin-top:8px;">
+      <div style="text-align:center;font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:16px;">In The Real System</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;text-align:center;">
+        <div><p style="font-size:1.5rem;margin-bottom:4px;">📞</p><p style="font-size:.82rem;font-weight:700;">Runs on any phone</p><p style="font-size:.72rem;color:var(--muted);">2G Nokia or iPhone — no difference</p></div>
+        <div><p style="font-size:1.5rem;margin-bottom:4px;">🔊</p><p style="font-size:.82rem;font-weight:700;">Voice callback</p><p style="font-size:.72rem;color:var(--muted);">Auto-calls the patient after check-in</p></div>
+        <div><p style="font-size:1.5rem;margin-bottom:4px;">⚡</p><p style="font-size:.82rem;font-weight:700;">&lt; 5 seconds</p><p style="font-size:.72rem;color:var(--muted);">From dial to doctor alert</p></div>
+        <div><p style="font-size:1.5rem;margin-bottom:4px;">🔒</p><p style="font-size:.82rem;font-weight:700;">Fully private</p><p style="font-size:.72rem;color:var(--muted);">No names stored, phone masked</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: LANGUAGES ═══════════════════════════ -->
+  <div class="page" id="page-languages">
+    <h1 style="font-size:1.4rem;font-weight:800;">USSD Languages</h1>
+    <div class="card">
+      <div class="card-title">Supported Languages (5)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;background:var(--ok-bg);border-color:var(--ok-bd);">
+          <div style="font-size:1.5rem;margin-bottom:4px;">🇬🇭</div>
+          <div style="font-weight:700;">English</div>
+          <div class="badge-ok" style="display:inline-block;margin-top:6px;">Active</div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;background:var(--ok-bg);border-color:var(--ok-bd);">
+          <div style="font-size:1.5rem;margin-bottom:4px;">🇬🇭</div>
+          <div style="font-weight:700;">Twi</div>
+          <div class="badge-ok" style="display:inline-block;margin-top:6px;">Active</div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;background:var(--ok-bg);border-color:var(--ok-bd);">
+          <div style="font-size:1.5rem;margin-bottom:4px;">🇳🇬</div>
+          <div style="font-weight:700;">Hausa</div>
+          <div class="badge-ok" style="display:inline-block;margin-top:6px;">Active</div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;background:var(--ok-bg);border-color:var(--ok-bd);">
+          <div style="font-size:1.5rem;margin-bottom:4px;">🇬🇭</div>
+          <div style="font-weight:700;">Ga</div>
+          <div class="badge-ok" style="display:inline-block;margin-top:6px;">Active</div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;background:var(--ok-bg);border-color:var(--ok-bd);">
+          <div style="font-size:1.5rem;margin-bottom:4px;">🇬🇭</div>
+          <div style="font-weight:700;">Ewe</div>
+          <div class="badge-ok" style="display:inline-block;margin-top:6px;">Active</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: SETTINGS ═══════════════════════════ -->
+  <div class="page" id="page-settings">
+    <h1 style="font-size:1.4rem;font-weight:800;">Settings</h1>
+    <div class="card">
+      <div class="card-title">Patient Privacy Protection</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h4>Pseudonymous storage</h4>
+          <p>Only phone number stored — no name, ID, or address</p>
+        </div>
+        <button class="toggle on" id="toggle-pseudo" onclick="toggleSetting(this)"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h4>Mask phone numbers in dashboard</h4>
+          <p>Display as +233 ••• XXXX for clinician views</p>
+        </div>
+        <button class="toggle on" id="toggle-mask" onclick="toggleSetting(this)"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h4>No GPS collection</h4>
+          <p>Location data is never requested or stored</p>
+        </div>
+        <button class="toggle on" id="toggle-gps" onclick="toggleSetting(this)"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h4>Audit log enabled</h4>
+          <p>All record access is timestamped and logged</p>
+        </div>
+        <button class="toggle on" id="toggle-audit" onclick="toggleSetting(this)"></button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Escalation Settings</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h4>Auto-escalate CRITICAL after 5 min</h4>
+          <p>If clinician does not acknowledge, case escalates automatically</p>
+        </div>
+        <button class="toggle on" id="toggle-autoesc" onclick="toggleSetting(this)"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h4>Auto-escalate HIGH after 60 min</h4>
+          <p>Warning-level cases escalate if unresolved within shift SLA</p>
+        </div>
+        <button class="toggle on" id="toggle-autoesc2" onclick="toggleSetting(this)"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h4>SMS notification on escalation</h4>
+          <p>Notify regional clinical anchor via SMS when escalated</p>
+        </div>
+        <button class="toggle on" id="toggle-sms" onclick="toggleSetting(this)"></button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Call Integration</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h4>Direct mobile dial (no API key needed)</h4>
+          <p>Opens phone dialer on any device — works without Africa's Talking</p>
+        </div>
+        <button class="toggle on" id="toggle-dial" onclick="toggleSetting(this)"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h4>Africa's Talking automated calling</h4>
+          <p>Requires AT_API_KEY + AT_USERNAME to activate in-app calls</p>
+        </div>
+        <button class="toggle" id="toggle-at" onclick="toggleSetting(this)"></button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Shift Settings</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h4>Shift hours</h4>
+          <p>Day shift: 06:00–18:00 · Night shift: 18:00–06:00</p>
+        </div>
+        <span class="badge-ok">Configured</span>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h4>Hospital name</h4>
+          <p id="hosp-name-display">Komfo Anokye Teaching Hospital, Kumasi</p>
+        </div>
+        <button class="btn btn-outline" onclick="editHospital()" style="padding:5px 12px;font-size:.75rem;">Edit</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- ═══════════════════════════════════════════ MODALS -->
+
+<!-- CALL MODAL -->
+<div class="modal-overlay" id="call-modal">
+  <div class="modal">
+    <div class="call-modal-top">
+      <div class="call-icon">
+        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="white"><path stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+      </div>
+      <div style="font-size:.65rem;font-weight:700;letter-spacing:.1em;opacity:.7;text-transform:uppercase;">Call Patient</div>
+      <div class="call-number" id="call-number-display">+233000000000</div>
+      <div class="call-status">● Not called yet</div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:14px;font-size:.9rem;border-radius:12px;" onclick="placeCall()">
+      📞 Call now
+    </button>
+    <div style="background:#f9fafb;border-radius:10px;padding:12px;margin-top:10px;font-size:.75rem;color:var(--muted);line-height:1.5;">
+      Opens your phone's dialer and places a <b>real call</b> to the patient. Calling as <b>On-duty Clinician</b>.<br>
+      <span style="font-size:.7rem;">Automated in-app calling activates once Africa's Talking (AT_API_KEY + AT_USERNAME) is connected.</span>
+    </div>
+    <button class="btn btn-outline" style="width:100%;margin-top:10px;padding:12px;" onclick="closeModal('call-modal')">Close</button>
+  </div>
+</div>
+
+<!-- ESCALATE MODAL -->
+<div class="modal-overlay" id="escalate-modal">
+  <div class="modal">
+    <div class="modal-header">Escalate Patient</div>
+    <div class="modal-title">Clinical Referral</div>
+    <div style="background:var(--warn-bg);border:1px solid var(--warn-bd);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color:var(--warn);flex-shrink:0;"><path stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      <span style="font-size:.82rem;font-weight:600;" id="esc-symptom">Reported: Bleeding</span>
+    </div>
+    <div style="font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:8px;">Select escalation level</div>
+    <div class="modal-option selected" onclick="selectEscLevel(this,'District Hospital')">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 00-1-1h-2a1 1 0 00-1 1v5m4 0H9"/></svg>
+      <span style="font-size:.88rem;font-weight:600;">District Hospital</span>
+      <span class="check" style="font-size:1rem;">✓</span>
+    </div>
+    <div class="modal-option" onclick="selectEscLevel(this,'Regional Hospital')">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 00-1-1h-2a1 1 0 00-1 1v5m4 0H9"/></svg>
+      <span style="font-size:.88rem;font-weight:600;">Regional Hospital</span>
+      <span class="check" style="font-size:1rem;">✓</span>
+    </div>
+    <div class="modal-option" onclick="selectEscLevel(this,'Teaching / Specialist')">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 00-1-1h-2a1 1 0 00-1 1v5m4 0H9"/></svg>
+      <span style="font-size:.88rem;font-weight:600;">Teaching / Specialist</span>
+      <span class="check" style="font-size:1rem;">✓</span>
+    </div>
+    <div class="modal-option" onclick="selectEscLevel(this,'Emergency Services (112)')">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      <span style="font-size:.88rem;font-weight:600;">Emergency Services (112)</span>
+      <span class="check" style="font-size:1rem;">✓</span>
+    </div>
+    <div style="font-size:.78rem;color:var(--muted);margin:12px 0 4px;">Receiving facility (optional)</div>
+    <input type="text" class="modal-input" placeholder="E.g. Komfo Anokye Teaching Hospital">
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:4px;">Referral notes (optional)</div>
+    <textarea class="modal-input" placeholder="E.g. Pre-eclampsia suspected, BP elevated..."></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('escalate-modal')">Cancel</button>
+      <button class="btn btn-danger" onclick="sendEscalation()" style="flex:2;">↑ Send Escalation</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOSPITAL EDIT MODAL -->
+<div class="modal-overlay" id="hospital-modal">
+  <div class="modal">
+    <div class="modal-title">Edit Hospital / Facility</div>
+    <label style="font-size:.78rem;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">Facility name</label>
+    <input type="text" class="modal-input" id="hosp-input" value="Komfo Anokye Teaching Hospital, Kumasi">
+    <label style="font-size:.78rem;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">Region</label>
+    <input type="text" class="modal-input" id="region-input" value="Ashanti">
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('hospital-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveHospital()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- OUTCOME MODAL -->
+<div class="modal-overlay" id="outcome-modal">
+  <div class="modal">
+    <div class="modal-title">Mark Outcome</div>
+    <div id="outcome-patient-ref" style="font-size:.8rem;color:var(--muted);margin-bottom:16px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button class="btn" onclick="setOutcome('Seen safely')" style="background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-bd);padding:12px;border-radius:10px;">✅ Seen safely</button>
+      <button class="btn" onclick="setOutcome('Referred')" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);padding:12px;border-radius:10px;">🏥 Referred</button>
+      <button class="btn" onclick="setOutcome('Safe delivery')" style="background:#fdf2f8;color:#9d174d;border:1px solid #fbcfe8;padding:12px;border-radius:10px;">👶 Safe delivery</button>
+      <button class="btn" onclick="setOutcome('Lost to follow-up')" style="background:#f9fafb;color:#374151;border:1px solid #d1d5db;padding:12px;border-radius:10px;">⚠️ Lost to follow-up</button>
+    </div>
+    <button class="btn btn-outline" onclick="closeModal('outcome-modal')" style="width:100%;margin-top:10px;">Cancel</button>
+  </div>
+</div>
+
 <script>
-    // CONFIGURATION KEYS
-    const CONFIG = {
-        BIN_ID: "YOUR_BIN_ID_HERE",
-        MASTER_KEY: "YOUR_MASTER_KEY_HERE"
-    };
+// ═══ DATA ════════════════════════════════════════════════════════
+const patients = [
+  {id:'p1',phone:'+233 ••• 9777',lang:'EN',enrolled:'21 Jun 2026',risk:'CRITICAL',lastActive:'14 minutes ago',sessions:1,alerts:1,symptom:'Heavy bleeding',outcome:'Awaiting follow-up',anc:null,timeline:[
+    {type:'crit',text:'Reported: Heavy bleeding (diagnostic test)',sub:'CRITICAL · 21 Jun 2026 · 17:43'},
+    {type:'warn',text:'CRITICAL alert · Heavy bleeding',sub:'Alert sent · 21 Jun 2026 · 17:43'}
+  ]},
+  {id:'p2',phone:'+233 ••• 9884',lang:'EN',enrolled:'21 Jun 2026',risk:'CRITICAL',lastActive:'9 minutes ago',sessions:1,alerts:1,symptom:'Bleeding',outcome:'Awaiting follow-up',anc:null,timeline:[
+    {type:'crit',text:'Reported: Bleeding',sub:'CRITICAL · 21 Jun 2026 · 17:52'},
+  ]},
+  {id:'p3',phone:'+233 ••• 6763',lang:'TW',enrolled:'21 Jun 2026',risk:'CRITICAL',lastActive:'3 hours ago',sessions:1,alerts:1,symptom:'Bleeding',outcome:'Awaiting follow-up',anc:'28 Jun 2026',timeline:[
+    {type:'crit',text:'Reported: Bleeding',sub:'CRITICAL · 21 Jun 2026 · 14:30'},
+  ]},
+  {id:'p4',phone:'+233 ••• 5111',lang:'EN',enrolled:'21 Jun 2026',risk:'CRITICAL',lastActive:'3 hours ago',sessions:1,alerts:1,symptom:'Heavy bleeding',outcome:'Awaiting follow-up',anc:null,timeline:[
+    {type:'crit',text:'Reported: Heavy bleeding',sub:'CRITICAL · 21 Jun 2026 · 14:28'},
+  ]},
+  {id:'p5',phone:'+233 ••• 6152',lang:'EN',enrolled:'7 days ago',risk:'LOW',lastActive:'7 days ago',sessions:1,alerts:0,symptom:null,outcome:'Seen safely',anc:'30 Jun 2026',timeline:[
+    {type:'ok',text:'Enrolled via *929#',sub:'21 Jun 2026 · 07:00'},
+  ]},
+  {id:'p6',phone:'+233 ••• 8312',lang:'TW',enrolled:'7 days ago',risk:'LOW',lastActive:'7 days ago',sessions:1,alerts:0,symptom:null,outcome:'Scheduled',anc:'25 Jun 2026',timeline:[
+    {type:'ok',text:'Enrolled via *929#',sub:'21 Jun 2026 · 07:15'},
+  ]},
+];
 
-    // ── USSD FLOW DATA ─────────────────────────────────────────────────
-    const flowData = {
-        LANG: {
-            text: "SamaCare v1.0\n*929#\n\nWelcome! Choose language:\n\n1. English\n2. Twi\n3. Hausa\n4. Ga\n5. Ewe",
-            options: [
-                {t:"1. English", v:"English"},
-                {t:"2. Twi",     v:"Twi"},
-                {t:"3. Hausa",   v:"Hausa"},
-                {t:"4. Ga",      v:"Ga"},
-                {t:"5. Ewe",     v:"Ewe"}
-            ]
-        },
-        TRIAGE: {
-            text: "SamaCare v1.0\n\nGood morning, Abena!\nHow are you feeling today?\n\n1. Fine, no issues\n2. I have some pain\n3. I feel dizzy\n4. I am bleeding\n5. Baby not moving",
-            options: [
-                {t:"1. Fine, no issues",   n:"FINE",             a:"Normal"},
-                {t:"2. I have some pain",  n:"CRITICAL_PAIN",    a:"ALERT_PAIN"},
-                {t:"3. I feel dizzy",       n:"CRITICAL_DIZZY",   a:"ALERT_DIZZY"},
-                {t:"4. I am bleeding",      n:"CRITICAL_BLEED",   a:"ALERT_BLEED"},
-                {t:"5. Baby not moving",    n:"CRITICAL_MOVEMENT",a:"ALERT_MOVEMENT"}
-            ]
-        },
-        FINE: {
-            text: "Thank you for updating\nSamaCare.\n\nYour routine check-in has\nbeen logged successfully.\n\n0. Back to main menu",
-            options: [{t:"0. Back", n:"TRIAGE", a:"Normal"}]
-        },
-        CRITICAL_PAIN: {
-            text: "⚠️ CRITICAL ALERT\n\nSevere pain detected.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
-            options: []
-        },
-        CRITICAL_DIZZY: {
-            text: "⚠️ CRITICAL ALERT\n\nSevere dizziness detected.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
-            options: []
-        },
-        CRITICAL_BLEED: {
-            text: "⚠️ CRITICAL ALERT\n\nBleeding detected.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
-            options: []
-        },
-        CRITICAL_MOVEMENT: {
-            text: "⚠️ CRITICAL ALERT\n\nReduced baby movement.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
-            options: []
-        },
-        ESCALATED: {
-            text: "🚨 CASE ESCALATED\n\nEmergency care services and\nregional healthcare teams\nhave been patched into this\nsession.\n\nClinician is responding.",
-            options: []
-        }
-    };
+const referrals = [
+  {phone:'+233 ••• 9777',level:'District Hospital',symptom:'Heavy bleeding',date:'21 Jun 2026 · 17:50',notes:'Pre-eclampsia suspected',status:'sent'},
+  {phone:'+233 ••• 6763',level:'Regional Hospital',symptom:'Bleeding',date:'21 Jun 2026 · 14:45',notes:'',status:'sent'},
+];
 
-    // ── CLOUD STATE ────────────────────────────────────────────────────
-    function updateCloudState(newState) {
-        if (CONFIG.BIN_ID === "YOUR_BIN_ID_HERE") {
-            renderSimulator(newState.step, newState.lang);
-            renderDashboard(newState.step, newState.lang, newState.alert);
-            return;
-        }
-        fetch(`https://api.jsonbin.io/v3/b/${CONFIG.BIN_ID}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': CONFIG.MASTER_KEY
-            },
-            body: JSON.stringify(newState)
-        }).catch(() => console.log("Cloud buffer — running locally"));
-    }
+const ancVisits = [
+  {phone:'+233 ••• 8312',date:'25 Jun 2026',notes:'Routine ANC check'},
+  {phone:'+233 ••• 6152',date:'30 Jun 2026',notes:''},
+  {phone:'+233 ••• 6763',date:'28 Jun 2026',notes:'Follow-up post bleeding report'},
+];
 
-    function startLiveSync() {
-        // Safe clock update
-        setInterval(() => {
-            const t = new Date();
-            const timeEl = document.getElementById('phone-time');
-            if (timeEl) {
-                timeEl.textContent = t.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
-            }
-        }, 1000);
+// ═══ NAVIGATION ══════════════════════════════════════════════════
+let currentPage = 'dashboard';
+function nav(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  const pageEl = document.getElementById('page-'+page);
+  if(pageEl){pageEl.classList.add('active');pageEl.classList.add('fadein');}
+  const sbMap = {dashboard:'dashboard',urgent:'urgent',refer:'refer',records:'records',patient:'records',anc:'anc',shift:'shift',ussd:'ussd',languages:'languages',settings:'settings'};
+  const sbEls = document.querySelectorAll('.sb-item');
+  const navLabels = ['dashboard','urgent','refer','records','anc','shift','ussd','languages','settings'];
+  navLabels.forEach((lbl,i)=>{if((sbMap[page]||page)===lbl && sbEls[i]) sbEls[i].classList.add('active');});
+  const titles = {dashboard:'My Dashboard',urgent:'Urgent Queue',refer:'Referrals',records:'Patient Records',patient:'Patient Record',anc:'ANC Visits',shift:'Shift Reports',ussd:'USSD Simulator',languages:'USSD Languages',settings:'Settings'};
+  document.getElementById('tb-path').innerHTML = `SamaCare › <b>${titles[page]||page}</b>`;
+  currentPage = page;
+  if(page==='records') renderRecords(patients);
+  if(page==='anc') renderAnc();
+  if(page==='urgent') renderUrgent('all');
+  if(page==='refer') renderReferrals();
+  if(page==='dashboard') renderRecentActivity();
+}
 
-        if (CONFIG.BIN_ID === "YOUR_BIN_ID_HERE") {
-            // Safe Offline Mode Boot
-            renderSimulator('LANG', '');
-            renderDashboard('LANG', '', 'Normal');
-            
-            const syncLabel = document.getElementById('sync-label');
-            if (syncLabel) syncLabel.textContent = 'Offline Mode';
-            
-            const syncDot = document.getElementById('sync-dot');
-            if (syncDot && syncDot.classList.contains('bg-green-400')) {
-                syncDot.classList.replace('bg-green-400', 'bg-yellow-400');
-            }
-            return;
-        }
+// ═══ CLOCK ═══════════════════════════════════════════════════════
+function updateClock(){
+  const now = new Date();
+  const t = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const d = now.toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('tb-clock').textContent = t;
+  const dc=document.getElementById('dash-date');const dtc=document.getElementById('dash-time');
+  if(dc)dc.textContent=d;if(dtc)dtc.textContent=t;
+  document.getElementById('sim-clock').textContent=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+setInterval(updateClock,1000);updateClock();
 
-        // Live sync connection loop
-        setInterval(() => {
-            fetch(`https://api.jsonbin.io/v3/b/${CONFIG.BIN_ID}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.MASTER_KEY }
-            })
-            .then(r => r.json())
-            .then(d => {
-                const data = d.record;
-                if (data && data.step) {
-                    renderSimulator(data.step, data.lang);
-                    renderDashboard(data.step, data.lang, data.alert);
-                }
-            })
-            .catch(() => {
-                const syncLabel = document.getElementById('sync-label');
-                if (syncLabel) syncLabel.textContent = 'Reconnecting...';
-            });
-        }, 1100);
-    }
+// ═══ SHIFT DATE ═══════════════════════════════════════════════════
+function updateShiftLabel(){
+  const now=new Date();
+  const h=now.getHours();
+  const shift=h>=6&&h<18?'Day shift: 06:00–18:00':'Night shift: 18:00–06:00';
+  const el=document.getElementById('shift-label');if(el)el.textContent=shift;
+  const sr=document.getElementById('shift-report-date');
+  if(sr)sr.textContent=now.toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · '+shift;
+}
+updateShiftLabel();
 
-    // ── RENDER SIMULATOR ───────────────────────────────────────────────
-    function renderSimulator(step, lang) {
-        const screen  = document.getElementById('screen-text') || document.querySelector('[id*="screen"]');
-        const actions = document.getElementById('action-container') || document.querySelector('[id*="action"]');
-        const current = flowData[step];
-        
-        if (!current || !screen || !actions) return;
+// ═══ WEEKLY CHART ═════════════════════════════════════════════════
+function renderChart(chartId, labelsId){
+  const days=['Mo','Tu','We','Th','Fr','Sa','Su'];
+  const vals=[2,5,3,8,4,6,4];
+  const maxV=Math.max(...vals);
+  const c=document.getElementById(chartId);
+  const l=document.getElementById(labelsId);
+  if(!c||!l)return;
+  c.innerHTML=vals.map(v=>`<div class="bar" style="height:${Math.round((v/maxV)*100)%};" title="${v} sessions"></div>`).join('');
+  l.innerHTML=days.map(d=>`<div class="bar-label">${d}</div>`).join('');
+  // fix percent
+  c.querySelectorAll('.bar').forEach((b,i)=>{b.style.height=Math.round((vals[i]/maxV)*76)+'px';});
+}
+renderChart('weekly-chart','weekly-labels');
+renderChart('shift-chart','shift-labels');
 
-        const isAlert = step.startsWith('CRITICAL_') || step === 'ESCALATED';
-        screen.className = isAlert
-            ? 'whitespace-pre-line leading-relaxed text-red-500 font-mono'
-            : 'whitespace-pre-line leading-relaxed text-gray-800 font-mono';
-        
-        screen.textContent = current.text;
-        actions.innerHTML = '';
+// ═══ DASH ALERTS ═════════════════════════════════════════════════
+function renderDashAlerts(){
+  const el=document.getElementById('dash-alerts');
+  if(!el)return;
+  const crit=patients.filter(p=>p.risk==='CRITICAL').slice(0,2);
+  el.innerHTML=crit.map(p=>`
+    <div style="background:var(--crit-bg);border:1px solid var(--crit-bd);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <span style="font-weight:700;font-size:.85rem;">${p.phone}</span>
+        <span class="badge-critical" style="margin-left:8px;">● CRITICAL</span>
+        <span style="font-size:.7rem;background:#f3f4f6;border-radius:4px;padding:1px 6px;margin-left:4px;">${p.lang}</span>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:2px;">Reported: ${p.symptom} · ${p.lastActive}</div>
+      </div>
+      <button class="btn btn-call" onclick="openPatient('${p.id}')" style="font-size:.7rem;padding:5px 10px;">View</button>
+    </div>`).join('');
+}
+renderDashAlerts();
 
-        current.options.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = "w-full bg-gray-100 text-gray-800 border border-gray-300 p-2.5 my-1 rounded-xl text-xs font-mono text-left hover:bg-gray-200 transition font-semibold";
-            btn.textContent = opt.t;
-            btn.onclick = () => {
-                if (step === 'LANG') updateCloudState({step:'TRIAGE', lang:opt.v, alert:'Normal'});
-                else updateCloudState({step:opt.n, lang:lang, alert:opt.a});
-            };
-            actions.appendChild(btn);
-        });
-    }
-
-    // ── RENDER DASHBOARD ───────────────────────────────────────────────
-    function renderDashboard(step, lang, alertState) {
-        const dashLang = document.getElementById('dash-lang');
-        const dashStep = document.getElementById('dash-step');
-        if (dashLang) dashLang.textContent = lang || '—';
-        if (dashStep) dashStep.textContent = step || '—';
-
-        const triage  = document.getElementById('triage-box');
-        const actions = document.getElementById('dashboard-actions');
-        const outcome = document.getElementById('outcome-panel');
-        const status  = document.getElementById('dash-status');
-
-        if (!triage) return;
-
-        if (alertState && alertState.startsWith('ALERT_')) {
-            triage.className = "bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-xs font-bold";
-            if (actions) actions.classList.remove('hidden');
-            if (outcome) outcome.classList.remove('hidden');
-            if (status) status.className = "bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full text-center";
-
-            const msgs = {
-                ALERT_PAIN:     "🚨 CRITICAL: Patient reported Severe Pain",
-                ALERT_DIZZY:    "🚨 CRITICAL: Patient reported Severe Dizziness",
-                ALERT_BLEED:    "🚨 CRITICAL: Patient reported Maternal Bleeding",
-                ALERT_MOVEMENT: "🚨 CRITICAL: Patient reported Reduced Baby Movement"
-            };
-            triage.textContent = msgs[alertState] || "🚨 CRITICAL ALERT";
-
-        } else if (alertState === 'ESCALATED') {
-            triage.className = "bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-3 text-xs font-bold";
-            triage.textContent = "⚠️ ESCALATED: Auto-escalation active. Regional clinical anchors notified.";
-            if (actions) actions.classList.add('hidden');
-            if (outcome) outcome.classList.remove('hidden');
-            if (status) status.className = "bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full";
-
-        } else {
-            triage.className = "bg-gray-50 text-gray-500 italic rounded-xl p-3 text-xs";
-            triage.textContent = step === 'LANG'
-                ? "Waiting for mother to dial in..."
-                : "Monitoring active patient telemetry...";
-            if (actions) actions.classList.add('hidden');
-            if (outcome) outcome.classList.add('hidden');
-            if (status) status.className = "bg-green-50 text-green-600 text-xs font-bold px-3 py-1 rounded-full";
-        }
-    }
-
-    // ── ACTIONS ────────────────────────────────────────────────────────
-    function triggerReset() {
-        updateCloudState({step:'LANG', lang:'', alert:'Normal'});
-    }
-
-    function triggerEscalation() {
-        updateCloudState({step:'ESCALATED', lang:'Selected', alert:'ESCALATED'});
-    }
-
-    function markOutcome(outcome) {
-        alert(`Outcome marked: "${outcome}"\n\nCase logged.`);
-    }
-
-    // ── BOOT ───────────────────────────────────────────────────────────
-    window.onload = startLiveSync;
-</script>
-
-                            
+// ═══ RECENT ACTIVITY ═════════════════════════════════════════════
+function rende
