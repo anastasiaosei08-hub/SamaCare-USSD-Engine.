@@ -64,159 +64,212 @@
             </div>
         </div>
     </main>
+<script>
+    // CONFIGURATION KEYS
+    const CONFIG = {
+        BIN_ID: "YOUR_BIN_ID_HERE",
+        MASTER_KEY: "YOUR_MASTER_KEY_HERE"
+    };
 
-    <script>
-        // CONFIGURATION KEYS
-        const CONFIG = {
-            BIN_ID: "YOUR_BIN_ID_HERE",
-            MASTER_KEY: "YOUR_MASTER_KEY_HERE"
-        };
+    // ── USSD FLOW DATA ─────────────────────────────────────────────────
+    const flowData = {
+        LANG: {
+            text: "SamaCare v1.0\n*929#\n\nWelcome! Choose language:\n\n1. English\n2. Twi\n3. Hausa\n4. Ga\n5. Ewe",
+            options: [
+                {t:"1. English", v:"English"},
+                {t:"2. Twi",     v:"Twi"},
+                {t:"3. Hausa",   v:"Hausa"},
+                {t:"4. Ga",      v:"Ga"},
+                {t:"5. Ewe",     v:"Ewe"}
+            ]
+        },
+        TRIAGE: {
+            text: "SamaCare v1.0\n\nGood morning, Abena!\nHow are you feeling today?\n\n1. Fine, no issues\n2. I have some pain\n3. I feel dizzy\n4. I am bleeding\n5. Baby not moving",
+            options: [
+                {t:"1. Fine, no issues",   n:"FINE",             a:"Normal"},
+                {t:"2. I have some pain",  n:"CRITICAL_PAIN",    a:"ALERT_PAIN"},
+                {t:"3. I feel dizzy",       n:"CRITICAL_DIZZY",   a:"ALERT_DIZZY"},
+                {t:"4. I am bleeding",      n:"CRITICAL_BLEED",   a:"ALERT_BLEED"},
+                {t:"5. Baby not moving",    n:"CRITICAL_MOVEMENT",a:"ALERT_MOVEMENT"}
+            ]
+        },
+        FINE: {
+            text: "Thank you for updating\nSamaCare.\n\nYour routine check-in has\nbeen logged successfully.\n\n0. Back to main menu",
+            options: [{t:"0. Back", n:"TRIAGE", a:"Normal"}]
+        },
+        CRITICAL_PAIN: {
+            text: "⚠️ CRITICAL ALERT\n\nSevere pain detected.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
+            options: []
+        },
+        CRITICAL_DIZZY: {
+            text: "⚠️ CRITICAL ALERT\n\nSevere dizziness detected.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
+            options: []
+        },
+        CRITICAL_BLEED: {
+            text: "⚠️ CRITICAL ALERT\n\nBleeding detected.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
+            options: []
+        },
+        CRITICAL_MOVEMENT: {
+            text: "⚠️ CRITICAL ALERT\n\nReduced baby movement.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
+            options: []
+        },
+        ESCALATED: {
+            text: "🚨 CASE ESCALATED\n\nEmergency care services and\nregional healthcare teams\nhave been patched into this\nsession.\n\nClinician is responding.",
+            options: []
+        }
+    };
 
-        // ── USSD FLOW DATA ─────────────────────────────────────────────────
-        const flowData = {
-            LANG: {
-                text: "SamaCare v1.0\n*929#\n\nWelcome! Choose language:\n\n1. English\n2. Twi\n3. Hausa\n4. Ga\n5. Ewe",
-                options: [
-                    {t:"1. English", v:"English"},
-                    {t:"2. Twi",     v:"Twi"},
-                    {t:"3. Hausa",   v:"Hausa"},
-                    {t:"4. Ga",      v:"Ga"},
-                    {t:"5. Ewe",     v:"Ewe"}
-                ]
+    // ── CLOUD STATE ────────────────────────────────────────────────────
+    function updateCloudState(newState) {
+        if (CONFIG.BIN_ID === "YOUR_BIN_ID_HERE") {
+            renderSimulator(newState.step, newState.lang);
+            renderDashboard(newState.step, newState.lang, newState.alert);
+            return;
+        }
+        fetch(`https://api.jsonbin.io/v3/b/${CONFIG.BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': CONFIG.MASTER_KEY
             },
-            TRIAGE: {
-                text: "SamaCare v1.0\n\nGood morning, Abena!\nHow are you feeling today?\n\n1. Fine, no issues\n2. I have some pain\n3. I feel dizzy\n4. I am bleeding\n5. Baby not moving",
-                options: [
-                    {t:"1. Fine, no issues",   n:"FINE",             a:"Normal"},
-                    {t:"2. I have some pain",  n:"CRITICAL_PAIN",    a:"ALERT_PAIN"},
-                    {t:"3. I feel dizzy",       n:"CRITICAL_DIZZY",   a:"ALERT_DIZZY"},
-                    {t:"4. I am bleeding",      n:"CRITICAL_BLEED",   a:"ALERT_BLEED"},
-                    {t:"5. Baby not moving",    n:"CRITICAL_MOVEMENT",a:"ALERT_MOVEMENT"}
-                ]
-            },
-            FINE: {
-                text: "Thank you for updating\nSamaCare.\n\nYour routine check-in has\nbeen logged successfully.\n\n0. Back to main menu",
-                options: [{t:"0. Back", n:"TRIAGE", a:"Normal"}]
-            },
-            CRITICAL_PAIN: {
-                text: "⚠️ CRITICAL ALERT\n\nSevere pain detected.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
-                options: []
-            },
-            CRITICAL_DIZZY: {
-                text: "⚠️ CRITICAL ALERT\n\nSevere dizziness detected.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
-                options: []
-            },
-            CRITICAL_BLEED: {
-                text: "⚠️ CRITICAL ALERT\n\nBleeding detected.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
-                options: []
-            },
-            CRITICAL_MOVEMENT: {
-                text: "⚠️ CRITICAL ALERT\n\nReduced baby movement.\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nDo not wait.",
-                options: []
-            },
-            ESCALATED: {
-                text: "🚨 CASE ESCALATED\n\nEmergency care services and\nregional healthcare teams\nhave been patched into this\nsession.\n\nClinician is responding.",
-                options: []
+            body: JSON.stringify(newState)
+        }).catch(() => console.log("Cloud buffer — running locally"));
+    }
+
+    function startLiveSync() {
+        // Safe clock update
+        setInterval(() => {
+            const t = new Date();
+            const timeEl = document.getElementById('phone-time');
+            if (timeEl) {
+                timeEl.textContent = t.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
             }
-        };
+        }, 1000);
 
-        // ── CLOUD STATE ────────────────────────────────────────────────────
-        function updateCloudState(newState) {
-            if (CONFIG.BIN_ID === "YOUR_BIN_ID_HERE") {
-                // Offline mode — just render locally
-                renderSimulator(newState.step, newState.lang);
-                renderDashboard(newState.step, newState.lang, newState.alert);
-                return;
+        if (CONFIG.BIN_ID === "YOUR_BIN_ID_HERE") {
+            // Safe Offline Mode Boot
+            renderSimulator('LANG', '');
+            renderDashboard('LANG', '', 'Normal');
+            
+            const syncLabel = document.getElementById('sync-label');
+            if (syncLabel) syncLabel.textContent = 'Offline Mode';
+            
+            const syncDot = document.getElementById('sync-dot');
+            if (syncDot && syncDot.classList.contains('bg-green-400')) {
+                syncDot.classList.replace('bg-green-400', 'bg-yellow-400');
             }
-            fetch(`https://api.jsonbin.io/v3/b/${CONFIG.BIN_ID}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': CONFIG.MASTER_KEY
-                },
-                body: JSON.stringify(newState)
-            }).catch(() => console.log("Cloud buffer — running locally"));
+            return;
         }
 
-        function startLiveSync() {
-            // Update clock
-            setInterval(() => {
-                const t = new Date();
-                document.getElementById('phone-time').textContent =
-                    t.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
-            }, 1000);
-
-            if (CONFIG.BIN_ID === "YOUR_BIN_ID_HERE") {
-                // Offline mode — render default state
-                renderSimulator('LANG', '');
-                renderDashboard('LANG', '', 'Normal');
-                return;
-            }
-
-            // Live sync
-            setInterval(() => {
-                fetch(`https://api.jsonbin.io/v3/b/${CONFIG.BIN_ID}/latest`, {
-                    headers: { 'X-Master-Key': CONFIG.MASTER_KEY }
-                })
-                .then(r => r.json())
-                .then(d => {
-                    const data = d.record;
-                    if (data && data.step) {
-                        renderSimulator(data.step, data.lang);
-                        renderDashboard(data.step, data.lang, data.alert);
-                    }
-                })
-                .catch(() => {
-                    console.log("Reconnecting...");
-                });
-            }, 1100);
-        }
-
-        // ── RENDER SIMULATOR ───────────────────────────────────────────────
-        function renderSimulator(step, lang) {
-            const screen  = document.getElementById('screen-text');
-            const actions = document.getElementById('action-container');
-            const current = flowData[step];
-            if (!current) return;
-
-            // Alert colour on screen text
-            const isAlert = step.startsWith('CRITICAL_') || step === 'ESCALATED';
-            screen.className = isAlert
-                ? 'whitespace-pre-line leading-relaxed text-red-400 font-mono'
-                : 'whitespace-pre-line leading-relaxed text-green-400 font-mono';
-            screen.textContent = current.text;
-            actions.innerHTML = '';
-
-            current.options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = "bg-gray-900 text-gray-100 border border-gray-700 p-2 rounded-xl text-xs font-mono text-left hover:bg-gray-800 transition";
-                btn.textContent = opt.t;
-                btn.onclick = () => {
-                    if (step === 'LANG') updateCloudState({step:'TRIAGE', lang:opt.v, alert:'Normal'});
-                    else updateCloudState({step:opt.n, lang:lang, alert:opt.a});
-                };
-                actions.appendChild(btn);
+        // Live sync connection loop
+        setInterval(() => {
+            fetch(`https://api.jsonbin.io/v3/b/${CONFIG.BIN_ID}/latest`, {
+                headers: { 'X-Master-Key': CONFIG.MASTER_KEY }
+            })
+            .then(r => r.json())
+            .then(d => {
+                const data = d.record;
+                if (data && data.step) {
+                    renderSimulator(data.step, data.lang);
+                    renderDashboard(data.step, data.lang, data.alert);
+                }
+            })
+            .catch(() => {
+                const syncLabel = document.getElementById('sync-label');
+                if (syncLabel) syncLabel.textContent = 'Reconnecting...';
             });
+        }, 1100);
+    }
+
+    // ── RENDER SIMULATOR ───────────────────────────────────────────────
+    function renderSimulator(step, lang) {
+        const screen  = document.getElementById('screen-text') || document.querySelector('[id*="screen"]');
+        const actions = document.getElementById('action-container') || document.querySelector('[id*="action"]');
+        const current = flowData[step];
+        
+        if (!current || !screen || !actions) return;
+
+        const isAlert = step.startsWith('CRITICAL_') || step === 'ESCALATED';
+        screen.className = isAlert
+            ? 'whitespace-pre-line leading-relaxed text-red-500 font-mono'
+            : 'whitespace-pre-line leading-relaxed text-gray-800 font-mono';
+        
+        screen.textContent = current.text;
+        actions.innerHTML = '';
+
+        current.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full bg-gray-100 text-gray-800 border border-gray-300 p-2.5 my-1 rounded-xl text-xs font-mono text-left hover:bg-gray-200 transition font-semibold";
+            btn.textContent = opt.t;
+            btn.onclick = () => {
+                if (step === 'LANG') updateCloudState({step:'TRIAGE', lang:opt.v, alert:'Normal'});
+                else updateCloudState({step:opt.n, lang:lang, alert:opt.a});
+            };
+            actions.appendChild(btn);
+        });
+    }
+
+    // ── RENDER DASHBOARD ───────────────────────────────────────────────
+    function renderDashboard(step, lang, alertState) {
+        const dashLang = document.getElementById('dash-lang');
+        const dashStep = document.getElementById('dash-step');
+        if (dashLang) dashLang.textContent = lang || '—';
+        if (dashStep) dashStep.textContent = step || '—';
+
+        const triage  = document.getElementById('triage-box');
+        const actions = document.getElementById('dashboard-actions');
+        const outcome = document.getElementById('outcome-panel');
+        const status  = document.getElementById('dash-status');
+
+        if (!triage) return;
+
+        if (alertState && alertState.startsWith('ALERT_')) {
+            triage.className = "bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-xs font-bold";
+            if (actions) actions.classList.remove('hidden');
+            if (outcome) outcome.classList.remove('hidden');
+            if (status) status.className = "bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full text-center";
+
+            const msgs = {
+                ALERT_PAIN:     "🚨 CRITICAL: Patient reported Severe Pain",
+                ALERT_DIZZY:    "🚨 CRITICAL: Patient reported Severe Dizziness",
+                ALERT_BLEED:    "🚨 CRITICAL: Patient reported Maternal Bleeding",
+                ALERT_MOVEMENT: "🚨 CRITICAL: Patient reported Reduced Baby Movement"
+            };
+            triage.textContent = msgs[alertState] || "🚨 CRITICAL ALERT";
+
+        } else if (alertState === 'ESCALATED') {
+            triage.className = "bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-3 text-xs font-bold";
+            triage.textContent = "⚠️ ESCALATED: Auto-escalation active. Regional clinical anchors notified.";
+            if (actions) actions.classList.add('hidden');
+            if (outcome) outcome.classList.remove('hidden');
+            if (status) status.className = "bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full";
+
+        } else {
+            triage.className = "bg-gray-50 text-gray-500 italic rounded-xl p-3 text-xs";
+            triage.textContent = step === 'LANG'
+                ? "Waiting for mother to dial in..."
+                : "Monitoring active patient telemetry...";
+            if (actions) actions.classList.add('hidden');
+            if (outcome) outcome.classList.add('hidden');
+            if (status) status.className = "bg-green-50 text-green-600 text-xs font-bold px-3 py-1 rounded-full";
         }
+    }
 
-        // ── RENDER DASHBOARD ───────────────────────────────────────────────
-        function renderDashboard(step, lang, alertState) {
-            document.getElementById('dash-lang').textContent  = lang  || '—';
-            document.getElementById('dash-step').textContent  = step  || '—';
+    // ── ACTIONS ────────────────────────────────────────────────────────
+    function triggerReset() {
+        updateCloudState({step:'LANG', lang:'', alert:'Normal'});
+    }
 
-            const triage  = document.getElementById('triage-box');
-            const actions = document.getElementById('dashboard-actions');
-            const outcome = document.getElementById('outcome-panel');
-            const status  = document.getElementById('dash-status');
+    function triggerEscalation() {
+        updateCloudState({step:'ESCALATED', lang:'Selected', alert:'ESCALATED'});
+    }
 
-            if (alertState && alertState.startsWith('ALERT_')) {
-                triage.className = "bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-xs font-bold font-sans";
-                actions.classList.remove('hidden');
-                outcome.classList.remove('hidden');
-                status.className = "bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full animate-bounce";
+    function markOutcome(outcome) {
+        alert(`Outcome marked: "${outcome}"\n\nCase logged.`);
+    }
 
-                const msgs = {
-                    ALERT_PAIN:     "🚨 CRITICAL: Patient reported Severe Pain",
-                    ALERT_DIZZY:    "🚨 CRITICAL: Patient reported Severe Dizziness",
-                    ALERT_BLEED:    "🚨 CRITICAL: Patient reported Maternal Bleeding",
-                    ALERT_MOVEMENT: "🚨 CRITICAL: Patient reported Reduced Baby Movement"
+    // ── BOOT ───────────────────────────────────────────────────────────
+    window.onload = startLiveSync;
+</script>
+
+                            
