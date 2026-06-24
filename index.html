@@ -1,1 +1,330 @@
-Add live SamaCare interface
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SamaCare USSD Simulator & Clinician Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FAF6F0; }
+        .phone-screen { background-color: #6B1D2F; color: #FAF6F0; }
+        .btn-maroon { background-color: #6B1D2F; color: #FAF6F0; }
+        .btn-maroon:hover { background-color: #521422; }
+        .text-maroon { color: #6B1D2F; }
+        .border-maroon { border-color: #6B1D2F; }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex flex-col justify-between">
+
+    <!-- TOP HEADER -->
+    <header class="max-w-6xl mx-auto w-full text-center mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <button class="flex items-center text-gray-600 font-medium text-sm hover:text-black">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> Back
+            </button>
+            <div class="flex items-center gap-2">
+                <span class="text-2xl font-bold text-maroon flex items-center gap-1">
+                    <span class="text-red-500">sama</span>Care
+                </span>
+                <span class="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded font-semibold">USSD Simulator</span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="resetApp()" class="flex items-center text-gray-600 font-medium text-sm hover:text-black border px-3 py-1 rounded-md bg-white shadow-sm">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4 mr-1"></i> Reset
+                </button>
+                <button class="bg-red-500 text-white font-medium text-sm px-3 py-1 rounded-md shadow-sm hover:bg-red-600">
+                    Dashboard <i data-lucide="external-link" class="w-3 h-3 inline ml-0.5"></i>
+                </button>
+            </div>
+        </div>
+
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Interactive <i>USSD</i> Demo</h1>
+        <p class="text-gray-600 max-w-2xl mx-auto text-sm mb-6">
+            A self-contained walkthrough of the "SamaCare" USSD flow in five languages. The panel on the right shows what a clinician sees on the <span class="text-red-500 font-semibold underline">Doctor Dashboard</span> when a real session comes in.
+        </p>
+
+        <!-- Mode Selectors -->
+        <div class="flex flex-wrap justify-center gap-2 mb-4">
+            <button class="bg-white border text-gray-700 px-3 py-1.5 rounded-full text-xs font-medium flex items-center shadow-sm">🇬🇭 English</button>
+            <button class="bg-white border text-gray-400 px-3 py-1.5 rounded-full text-xs font-medium flex items-center opacity-60">🇬🇭 Twi</button>
+            <button class="bg-white border text-gray-400 px-3 py-1.5 rounded-full text-xs font-medium flex items-center opacity-60">🇳🇬 Hausa</button>
+            <button class="bg-white border text-gray-400 px-3 py-1.5 rounded-full text-xs font-medium flex items-center opacity-60">🇬🇭 Ga</button>
+            <button class="bg-white border text-gray-400 px-3 py-1.5 rounded-full text-xs font-medium flex items-center opacity-60">🇬🇭 Ewe</button>
+        </div>
+
+        <div class="flex justify-center gap-3">
+            <button id="ussd-toggle" onclick="switchChannel('USSD')" class="btn-maroon px-4 py-1.5 rounded-md text-xs font-bold flex items-center shadow-md">
+                <i data-lucide="phone" class="w-3.5 h-3.5 mr-1.5"></i> USSD *920#
+            </button>
+            <button id="whatsapp-toggle" onclick="switchChannel('WhatsApp')" class="bg-white border border-gray-300 text-gray-700 px-4 py-1.5 rounded-md text-xs font-bold flex items-center shadow-sm hover:bg-gray-50">
+                <i data-lucide="message-square" class="w-3.5 h-3.5 mr-1.5 text-green-500"></i> WhatsApp Bot
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN INTERFACE -->
+    <main class="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-start my-auto">
+        <!-- LEFT COLUMN: DEVICE SIMULATOR -->
+        <div class="flex justify-center items-center">
+            <div class="w-72 phone-screen rounded-[40px] p-6 shadow-2xl border-[6px] border-gray-800 relative flex flex-col justify-between min-h-[500px]">
+                <div class="flex justify-between items-center text-[10px] opacity-75 mb-4">
+                    <span id="phone-channel-label">SamaCare USSD</span>
+                    <div class="flex items-center gap-1">
+                        <i data-lucide="signal" class="w-3 h-3"></i>
+                        <i data-lucide="battery" class="w-3 h-3"></i>
+                    </div>
+                </div>
+
+                <div class="flex-grow flex flex-col justify-start">
+                    <div class="bg-white text-gray-800 rounded-2xl p-4 text-xs shadow-inner mb-4 min-h-[160px] flex flex-col justify-between">
+                        <div id="screen-text" class="whitespace-pre-line font-medium leading-relaxed">
+                            Welcome to SamaCare.<br>Your virtual clinic.<br><br>Choose language:<br>1. English<br>2. Twi<br>3. Hausa<br>4. Ga<br>5. Ewe
+                        </div>
+                        <div id="screen-timestamp" class="text-[9px] text-gray-400 text-right mt-2"></div>
+                    </div>
+                    <div id="action-container" class="grid grid-cols-1 gap-2"></div>
+                </div>
+
+                <div class="mt-4 pt-2 border-t border-red-900/30 text-center">
+                    <button id="footer-action-btn" onclick="resetApp()" class="text-[11px] text-red-200 hover:text-white transition font-medium">
+                        Reset Simulation
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: CLINICIAN DASHBOARD -->
+        <div class="bg-white rounded-3xl p-6 shadow-xl border border-gray-100 w-full max-w-md mx-auto">
+            <div class="flex justify-between items-center pb-4 border-b border-gray-100">
+                <div>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Clinician View • Live</span>
+                    <h2 class="text-xl font-bold text-gray-800">Clinician Triage View</h2>
+                    <p class="text-[11px] text-gray-500">SamaCare Live Doctor Dashboard</p>
+                </div>
+                <span id="dashboard-status" class="bg-green-50 text-green-600 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> LIVE
+                </span>
+            </div>
+
+            <div class="py-4 space-y-2 text-xs border-b border-gray-100">
+                <div class="flex justify-between"><span class="text-gray-400">Phone</span><span id="dash-phone" class="font-semibold text-gray-700">+233 50 ••• 4144</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Language</span><span id="dash-lang" class="font-semibold text-gray-700">Waiting...</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Step</span><span id="dash-step" class="font-semibold text-gray-700">Language selection</span></div>
+            </div>
+
+            <div class="py-4 border-b border-gray-100">
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">AI Triage Result</span>
+                <div id="triage-box" class="bg-gray-50 rounded-xl p-3 text-xs text-gray-500 italic transition-all duration-300">
+                    Waiting for patient input...
+                </div>
+            </div>
+
+            <div class="py-4">
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Session Log</span>
+                <div id="session-logs" class="space-y-1.5 max-h-[110px] overflow-y-auto text-[11px] text-gray-600 font-mono">
+                    <div class="text-gray-400 italic">No activity yet</div>
+                </div>
+            </div>
+
+            <div id="dashboard-actions" class="grid grid-cols-2 gap-3 pt-2 hidden">
+                <button class="bg-red-600 text-white font-bold text-xs py-2.5 rounded-xl shadow-lg shadow-red-600/20 hover:bg-red-700 flex items-center justify-center gap-1.5">
+                    <i data-lucide="phone-call" class="w-3.5 h-3.5"></i> Call Now
+                </button>
+                <button class="border border-gray-200 text-gray-700 font-bold text-xs py-2.5 rounded-xl hover:bg-gray-50 flex items-center justify-center gap-1.5">
+                    <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-500"></i> Escalate
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER INFOGRAPHIC -->
+    <footer class="max-w-4xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 pt-6 border-t border-gray-200/60 text-center md:text-left">
+        <div class="text-center font-bold text-gray-400 text-xs md:col-span-3 tracking-widest uppercase mb-[-8px]">In the Real System</div>
+        <div class="flex items-start gap-3 bg-white/50 p-3 rounded-xl border border-gray-100">
+            <div class="p-2 bg-rose-50 text-rose-600 rounded-lg"><i data-lucide="phone-forwarded" class="w-5 h-5"></i></div>
+            <div>
+                <h4 class="text-xs font-bold text-gray-800">Runs on any phone</h4>
+                <p class="text-[11px] text-gray-500 leading-normal">2G Nokia or iPhone – no data connectivity difference.</p>
+            </div>
+        </div>
+        <div class="flex items-start gap-3 bg-white/50 p-3 rounded-xl border border-gray-100">
+            <div class="p-2 bg-rose-50 text-rose-600 rounded-lg"><i data-lucide="user-check" class="w-5 h-5"></i></div>
+            <div>
+                <h4 class="text-xs font-bold text-gray-800">Voice callback</h4>
+                <p class="text-[11px] text-gray-500 leading-normal">Auto-calls patients immediately after digital check-in.</p>
+            </div>
+        </div>
+        <div class="flex items-start gap-3 bg-white/50 p-3 rounded-xl border border-gray-100">
+            <div class="p-2 bg-rose-50 text-rose-600 rounded-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
+            <div>
+                <h4 class="text-xs font-bold text-gray-800">~ 1 second response</h4>
+                <p class="text-[11px] text-gray-500 leading-normal">Instant transmission from dial completion to doctor dashboard alert.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let currentChannel = 'USSD';
+        let currentStep = 'LANG';
+        let selectedLanguage = '';
+        let logs = [];
+
+        const flowData = {
+            LANG: {
+                USSD: "Welcome to SamaCare.\nYour virtual clinic.\n\nChoose language:\n1. English\n2. Twi\n3. Hausa\n4. Ga\n5. Ewe",
+                WhatsApp: "🤖 <b>SamaCare Bot</b>\nVirtual Clinic Online\n\nSend <b>hi</b> or <b>hello</b> to setup your virtual room chat session.",
+                options: [
+                    { text: "1. English", value: "1", action: () => selectLang('English') },
+                    { text: "2. Twi", value: "2", action: () => selectLang('Twi') },
+                    { text: "3. Hausa", value: "3", action: () => selectLang('Hausa') },
+                    { text: "4. Ga", value: "4", action: () => selectLang('Ga') },
+                    { text: "5. Ewe", value: "5", action: () => selectLang('Ewe') }
+                ]
+            },
+            MAIN_MENU: {
+                text: "SamaCare\n\nHow can I help?\n1. Daily Check-in\n2. Report a Symptom\n3. My Records\n0. Exit",
+                options: [
+                    { text: "1. Daily Check-in", value: "1", next: 'MAIN_MENU' },
+                    { text: "2. Report a Symptom", value: "2", next: 'SYMPTOMS' },
+                    { text: "3. My Records", value: "3", next: 'MAIN_MENU' },
+                    { text: "0. Exit", value: "0", next: 'LANG' }
+                ]
+            },
+            SYMPTOMS: {
+                text: "Select symptom:\n1. Headache/dizziness\n2. Abdominal pain\n3. Swollen hands/feet\n4. Fever\n5. Bleeding\n6. Reduced baby movement",
+                options: [
+                    { text: "1. Headache/dizziness", value: "1", next: 'CRITICAL' },
+                    { text: "2. Abdominal pain", value: "2", next: 'CRITICAL' },
+                    { text: "3. Swollen hands/feet", value: "3", next: 'CRITICAL' },
+                    { text: "4. Fever", value: "4", next: 'CRITICAL' },
+                    { text: "5. Bleeding", value: "5", next: 'CRITICAL' },
+                    { text: "6. Reduced baby movement", value: "6", next: 'CRITICAL' }
+                ]
+            },
+            CRITICAL: {
+                text: "⚠️ <b>CRITICAL ALERT</b>\n\nDoctor notified NOW.\nGo to hospital IMMEDIATELY.\n\nEmergency: 112",
+                options: []
+            }
+        };
+
+        function addLog(message) {
+            logs.push(message);
+            const container = document.getElementById('session-logs');
+            container.innerHTML = logs.map(l => `<div>• ${l}</div>`).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function switchChannel(channel) {
+            currentChannel = channel;
+            document.getElementById('ussd-toggle').className = channel === 'USSD' ? 'btn-maroon px-4 py-1.5 rounded-md text-xs font-bold flex items-center shadow-md' : 'bg-white border border-gray-300 text-gray-700 px-4 py-1.5 rounded-md text-xs font-bold flex items-center shadow-sm hover:bg-gray-50';
+            document.getElementById('whatsapp-toggle').className = channel === 'WhatsApp' ? 'btn-maroon px-4 py-1.5 rounded-md text-xs font-bold flex items-center shadow-md' : 'bg-white border border-gray-300 text-gray-700 px-4 py-1.5 rounded-md text-xs font-bold flex items-center shadow-sm hover:bg-gray-50';
+            document.getElementById('phone-channel-label').innerText = channel === 'USSD' ? 'SamaCare USSD' : 'WhatsApp Bot';
+            resetApp();
+        }
+
+        function selectLang(lang) {
+            selectedLanguage = lang;
+            document.getElementById('dash-lang').innerText = lang;
+            addLog(`Language chosen: ${lang}`);
+            goToStep('MAIN_MENU');
+        }
+
+        function goToStep(step, chosenOptionText = '') {
+            currentStep = step;
+            const data = flowData[step];
+            const screenTextElement = document.getElementById('screen-text');
+            const actionContainer = document.getElementById('action-container');
+            const dashStep = document.getElementById('dash-step');
+
+            if(chosenOptionText) {
+                addLog(`Patient pressed: ${chosenOptionText}`);
+            }
+
+            if (step === 'LANG') {
+                screenTextElement.innerHTML = flowData.LANG[currentChannel];
+                dashStep.innerText = "Language selection";
+            } else {
+                screenTextElement.innerHTML = data.text;
+                dashStep.innerText = step.charAt(0) + step.slice(1).toLowerCase().replace('_', ' ');
+            }
+
+            actionContainer.innerHTML = '';
+            if (data && data.options) {
+                data.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = "bg-white text-maroon border border-maroon/20 hover:bg-red-50 text-left px-3 py-1.5 rounded-xl text-xs font-semibold transition active:scale-95 shadow-sm";
+                    btn.innerText = opt.text;
+                    btn.onclick = () => {
+                        if (opt.action) opt.action();
+                        else if (opt.next === 'CRITICAL' || opt.text.includes('6')) handleCriticalTrigger(opt.text);
+                        else goToStep(opt.next, opt.text);
+                    };
+                    actionContainer.appendChild(btn);
+                });
+            }
+        }
+
+        function handleCriticalTrigger(optionName) {
+            currentStep = 'CRITICAL';
+            document.getElementById('dash-step').innerText = "Session ended";
+            addLog(`Patient selected: ${optionName}`);
+            addLog(`🚨 CRITICAL ALERT EMITTED`);
+
+            const screenTextElement = document.getElementById('screen-text');
+            screenTextElement.innerHTML = `⚠️ <b>CRITICAL ALERT</b><br><br>Doctor notified NOW.<br>Go to hospital IMMEDIATELY.<br><br>Emergency: 112`;
+            
+            const actionContainer = document.getElementById('action-container');
+            actionContainer.innerHTML = `
+                <button class="w-full bg-red-600 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md">
+                    <i data-lucide="message-square" class="w-3.5 h-3.5"></i> Start Chat Session
+                </button>
+                <button onclick="resetApp()" class="w-full border border-white/20 text-red-200 text-center py-1.5 text-xs font-semibold hover:text-white mt-1">
+                    Alert sent to clinician
+                </button>
+            `;
+
+            const triageBox = document.getElementById('triage-box');
+            triageBox.className = "bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-xs transition-all duration-300";
+            triageBox.innerHTML = `
+                <div class="flex items-center gap-1 font-bold text-red-600 mb-0.5">
+                    <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> CRITICAL
+                </div>
+                <div>CRITICAL – Doctor notified immediately</div>
+                <div class="mt-1 text-[11px] opacity-90 font-medium">Reported: <span class="underline">${optionName}</span></div>
+            `;
+
+            document.getElementById('dashboard-status').className = "bg-red-100 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 animate-bounce";
+            document.getElementById('dashboard-actions').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function resetApp() {
+            currentStep = 'LANG';
+            selectedLanguage = '';
+            logs = [];
+            
+            document.getElementById('dash-lang').innerText = "Waiting...";
+            document.getElementById('dash-step').innerText = "Language selection";
+            
+            const triageBox = document.getElementById('triage-box');
+            triageBox.className = "bg-gray-50 rounded-xl p-3 text-xs text-gray-500 italic";
+            triageBox.innerText = "Waiting for patient input...";
+
+            document.getElementById('dashboard-status').className = "bg-green-50 text-green-600 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1";
+            document.getElementById('dashboard-actions').classList.add('hidden');
+            document.getElementById('session-logs').innerHTML = `<div class="text-gray-400 italic">No activity yet</div>`;
+            
+            const now = new Date();
+            document.getElementById('screen-timestamp').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            goToStep('LANG');
+            lucide.createIcons();
+        }
+
+        window.onload = () => { resetApp(); };
+    </script>
+</body>
+</html>
+
